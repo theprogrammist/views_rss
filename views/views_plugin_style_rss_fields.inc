@@ -16,6 +16,35 @@ class views_plugin_style_rss_fields extends views_plugin_style {
     $image = theme('image', $this->feed_image);
     $this->view->feed_icon .= l($image, $path, $url_options);
   }
+  
+  
+  function option_definition() {
+    $options = parent::option_definition();
+
+    $options['description'] = array(
+      'contains' => array(
+        'feed_description' => array('default' => ''),
+      ),
+    );
+    
+    $field_options = array();
+    foreach ($this->xml_fields() as $k => $option) {
+      $field_options[$k] = array('default' => '');
+    }
+    
+    $options['fields'] = array(
+      'contains' => $field_options,
+    );
+    
+    $options['georss'] = array(
+      'contains' => array(
+        'lat' => array('default' => ''),
+        'lon' => array('default' => ''),
+      ),
+    );
+    
+    return $options;
+  }
 
   /**
    * Provide a form for setting options.
