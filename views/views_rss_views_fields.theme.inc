@@ -8,7 +8,16 @@ function template_preprocess_views_view_views_rss_fields(&$vars) {
   $view = $vars['view'];
 
   // Set basic info - title, description - about the feed
-  $vars['viewtitle'] = check_plain(variable_get('site_name', array()) . ' | ' . $view->display[$view->current_display]->display_title);
+  if ($view->display_handler->get_option('sitename_title')) {
+    $title = variable_get('site_name', 'Drupal');
+    if ($slogan = variable_get('site_slogan', '')) {
+      $title .= ' - ' . $slogan;
+    }
+  }
+  else {
+    $title = $view->get_title();
+  }
+  $vars['viewtitle'] = check_plain($title);
 
   if ($view->style_options['description']['feed_description']) {
     $description = $view->style_options['description']['feed_description'];
