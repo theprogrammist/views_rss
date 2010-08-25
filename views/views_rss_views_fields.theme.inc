@@ -40,8 +40,12 @@ function template_preprocess_views_view_views_rss_fields(&$vars) {
     if (isset($item['lat']) && isset($item['lon'])) {
       $item['georss:point'] = $item['lat'] .' '.  $item['lon'];
     }
+    if(isset($item['featureName'])) {
+      $item['georss:featureName'] = $item['featureName'];
+    }
     unset($item['lat']);
     unset($item['lon']);
+    unset($item['featureName']);
     $rows .= theme('views_rss_fields_item', $item);
     foreach ($item as $k => $v) {
       $elements[$k] = $k;
@@ -53,7 +57,7 @@ function template_preprocess_views_view_views_rss_fields(&$vars) {
       $namespaces[] = "xmlns:{$namespace['local']}=\"{$namespace['namespace']}\"";
     }
   }
-  $vars['namespaces'] = implode(' ', $namespaces);
+  $vars['namespaces'] = implode(' ', array_unique($namespaces));
 
   // Set Headers
   drupal_set_header('Content-Type: application/rss+xml; charset=utf-8');
@@ -64,13 +68,6 @@ function template_preprocess_views_view_views_rss_fields(&$vars) {
  */
 function template_preprocess_views_rss_fields_item(&$vars) {
   $item = $vars['item'];
-
-  // GeoRSS
-  if (isset($item['lat']) && isset($item['lon'])) {
-    $item['georss:point'] = check_plain($item['lat'] . ' ' .  $item['lon']);
-    unset($item['lat']);
-    unset($item['lon']);
-  }
 
   // Loop through key=>value pairs
   $row = '';

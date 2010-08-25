@@ -63,6 +63,7 @@ class views_plugin_style_rss_fields extends views_plugin_style {
       'contains' => array(
         'lat' => array('default' => ''),
         'lon' => array('default' => ''),
+        'featureName' => array('default' => ''),
       ),
     );
     
@@ -102,7 +103,7 @@ class views_plugin_style_rss_fields extends views_plugin_style {
         '#description' => t('Description for this feed.  If left blank, the default site mission will be used'),
       );
       // Field Chooser
-      $field_names[$field] = array('' => '--');
+      $field_names = array('' => '--');
       foreach ($handlers as $field => $handler) {
         if ($label = $handler->label()) {
           $field_names[$field] = $label;
@@ -148,6 +149,12 @@ class views_plugin_style_rss_fields extends views_plugin_style {
         '#title' => t('Longitude'),
         '#options' => $field_names,
         '#default_value' => $this->options['georss']['lon'],
+      );
+      $form['georss']['featureName'] = array(
+        '#type' => 'select',
+        '#title' => t('Feature Name'),
+        '#options' => $field_names,
+        '#default_value' => $this->options['georss']['featureName'],
       );
     }
   }
