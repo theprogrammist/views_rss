@@ -12,9 +12,32 @@ class views_plugin_style_rss_fields extends views_plugin_style {
    * feed image link.
    */
   function attach_to($display_id, $path, $title) {
-    $url_options = array('html' => true);
-    $image = theme('image', $this->feed_image);
-    $this->view->feed_icon .= l($image, $path, $url_options);
+    $display = $this->view->display[$display_id]->handler;
+    $url_options = array();
+    $input = $this->view->get_exposed_input();
+    if ($input) {
+      $url_options['query'] = $input;
+    }
+
+    $url = url($this->view->get_url(NULL, $path), $url_options);
+    if ($display->has_path()) {
+      if (empty($this->preview)) {
+        drupal_add_feed($url, $title);
+      }
+    }
+    else {
+      if (empty($this->view->feed_icon)) {
+        $this->view->feed_icon = '';
+      }
+
+      $this->view->feed_icon .= theme('feed_icon', $url, $title);
+      drupal_add_link(array(
+        'rel' => 'alternate',
+        'type' => 'application/rss+xml',
+        'title' => $title,
+        'href' => $url
+      ));
+    }
   }
   
   

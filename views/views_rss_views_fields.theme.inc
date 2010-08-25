@@ -67,7 +67,7 @@ function template_preprocess_views_rss_fields_item(&$vars) {
   $row = '';
   foreach ($item as $key => $value) {
     if ($value) {
-      $row .= "<$key>". check_plain($value) ."</$key>\n";
+      $row .= "<$key>". check_plain(htmlspecialchars_decode($value)) ."</$key>\n";
     }
   }
 
