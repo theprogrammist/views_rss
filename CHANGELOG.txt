@@ -1,6 +1,6 @@
 // $Id$
 
-Views RSS xxxxxxxxxxxxxx, xxxxxxxxxx
+Views RSS 6.x 1.0 beta 3, 2010-09-10
 ------------------------------------
 
 - #647176 alex_b: Add dc creator element support and refactor namespace
