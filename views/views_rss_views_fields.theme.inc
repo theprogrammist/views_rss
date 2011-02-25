@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * Template preprocessor for views-view-views-rss-fields.tpl.php.

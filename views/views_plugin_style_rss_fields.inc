@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * Extend the view_plugin_style class to provide an RSS view style.
