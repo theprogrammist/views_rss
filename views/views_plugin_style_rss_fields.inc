@@ -29,35 +29,34 @@ class views_plugin_style_rss_fields extends views_plugin_style {
         $this->view->feed_icon = '';
       }
 
-      $this->view->feed_icon .= theme('feed_icon', $url, $title);
+      $this->view->feed_icon .= theme('feed_icon', array('url' => $url, 'title' => $title));
       drupal_add_link(array(
         'rel' => 'alternate',
         'type' => 'application/rss+xml',
         'title' => $title,
-        'href' => $url
+        'href' => $url,
       ));
     }
   }
-  
-  
+
   function option_definition() {
     $options = parent::option_definition();
 
     $options['description'] = array(
       'contains' => array(
-        'feed_description' => array('default' => ''),
+        'feed_description' => array('default' => '', 'translatable' => TRUE),
       ),
     );
-    
+
     $field_options = array();
     foreach ($this->xml_fields() as $k => $option) {
       $field_options[$k] = array('default' => '');
     }
-    
+
     $options['fields'] = array(
       'contains' => $field_options,
     );
-    
+
     $options['georss'] = array(
       'contains' => array(
         'lat' => array('default' => ''),
@@ -65,7 +64,7 @@ class views_plugin_style_rss_fields extends views_plugin_style {
         'featureName' => array('default' => ''),
       ),
     );
-    
+
     return $options;
   }
 
@@ -77,7 +76,6 @@ class views_plugin_style_rss_fields extends views_plugin_style {
    */
   function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
-    $options = parent::option_definition();
 
     $handlers = $this->display->handler->get_handlers('field');
     if (empty($handlers)) {
@@ -167,8 +165,27 @@ class views_plugin_style_rss_fields extends views_plugin_style {
     $keys = array_keys($this->view->field);
 
     foreach ($rows as $count => $row) {
+      $this->view->row_index = $count;
       foreach ($keys as $id) {
-        $renders[$count][$id] = $this->view->field[$id]->theme($row);
+        $field = $this->view->field[$id];
+
+        // Wut, wuuuut??? crazy, yeah, but tere is no solid way of getting raw
+        // query result data.
+        // See: http://drupal.org/node/1172970
+        if ($field->field_alias == 'nid') {
+          $field_alias = 'field_' . $field->field;
+        }
+        else {
+          $field_alias = $field->field_alias;
+        }
+        $renders[$count][$id]['#markup'] = $field->theme($row);
+
+        // Link field causes problems.
+        // Maybe this whole map_rows thing isn't the right way to go.
+        // Do we need a custom row plugin?
+        if ($field_alias != 'unknown') {
+          $renders[$count][$id]['#raw'] = $row->{$field_alias};
+        }
       }
     }
 
@@ -176,8 +193,9 @@ class views_plugin_style_rss_fields extends views_plugin_style {
     foreach ($renders as $id => $row) {
       $item = array();
       foreach (array_merge($this->options['fields'], $this->options['georss']) as $key => $val) {
-        if (!isset($this->view->field[$val])) continue;
-        $item[$key] = $row[$val];
+        if (isset($this->view->field[$val])) {
+          $item[$key] = $row[$val];
+        }
       }
       $items[] = $item;
     }
@@ -220,6 +238,10 @@ class views_plugin_style_rss_fields extends views_plugin_style {
       'pubDate' => array(
         'title' => t('pubDate'),
         'description' => t('RSS 2.0 pubDate element'),
+      ),
+      'enclosure' => array(
+        'title' => t('enclosure'),
+        'description' => t('RSS 2.0 enclosure element'),
       ),
     );
   }

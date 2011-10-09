@@ -6,7 +6,8 @@
  */
 
 /**
- * Implementation of hook_views_style_plugins(). Adds view types to views UI interface.
+ * Implements hook_views_style_plugins(). 
+ * Adds view types to views UI interface().
  */
 function views_rss_views_plugins() {
   return array(
@@ -17,8 +18,8 @@ function views_rss_views_plugins() {
         'handler' => 'views_plugin_style_rss_fields',
         'theme' => 'views_view_views_rss_fields',
         'theme file' => 'views_rss_views_fields.theme.inc',
-        'theme path' => drupal_get_path('module', 'views_rss') .'/views',
-        'path' => drupal_get_path('module', 'views_rss') .'/views',
+        'theme path' => drupal_get_path('module', 'views_rss') . '/views',
+        'path' => drupal_get_path('module', 'views_rss') . '/views',
         'uses row plugin' => FALSE,
         'uses fields' => TRUE,
         'uses options' => TRUE,

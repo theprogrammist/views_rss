@@ -24,7 +24,7 @@ function template_preprocess_views_view_views_rss_fields(&$vars) {
   else {
     $description = variable_get('site_mission', '');
   }
-  $vars['description'] = theme('views_rss_feed_description', $description, $view);
+  $vars['description'] = theme('views_rss_feed_description', array('0' => $description, '1' => $view));
 
   // Base URL for link tag
   global $base_url;
@@ -34,18 +34,18 @@ function template_preprocess_views_view_views_rss_fields(&$vars) {
   $elements = $namespaces = array();
   $rows = '';
   $items = $view->style_plugin->map_rows($vars['rows']);
-  foreach($items as $item) {
+  foreach ($items as $item) {
     // Special handling for GeoRSS.
-    if (is_numeric($item['lat']) && is_numeric($item['lon'])) {
-      $item['georss:point'] = $item['lat'] .' '.  $item['lon'];
+    if (isset($item['lat']) && is_numeric($item['lat']) && isset($item['lon']) && is_numeric($item['lon'])) {
+      $item['georss:point'] = $item['lat'] . ' ' .  $item['lon'];
     }
-    if(isset($item['featureName'])) {
+    if (isset($item['featureName'])) {
       $item['georss:featureName'] = $item['featureName'];
     }
     unset($item['lat']);
     unset($item['lon']);
     unset($item['featureName']);
-    $rows .= theme('views_rss_fields_item', $item);
+    $rows .= theme('views_rss_fields_item', array('item' => $item));
     foreach ($item as $k => $v) {
       $elements[$k] = $k;
     }
@@ -59,38 +59,78 @@ function template_preprocess_views_view_views_rss_fields(&$vars) {
   $vars['namespaces'] = implode(' ', array_unique($namespaces));
 
   // Set Headers
-  drupal_set_header('Content-Type: application/rss+xml; charset=utf-8');
+  // During live preview we don't want to output the header since the contents
+  // of the feed are being displayed inside a normal HTML page.
+  if (empty($vars['view']->live_preview)) {
+    drupal_add_http_header('Content-Type', 'application/rss+xml; charset=utf-8');
+  }
 }
 
 /**
- * Template preprocessor for views-rss-fields-item.tpl.php.
+ * Element template
  */
-function template_preprocess_views_rss_fields_item(&$vars) {
-  $item = $vars['item'];
-
+function theme_views_rss_fields_item($variables) {
+  $item = $variables['item'];
   // Loop through key=>value pairs
   $row = '';
   foreach ($item as $key => $value) {
     if ($value) {
-      $row .= "<$key>". check_plain(htmlspecialchars_decode($value)) ."</$key>\n";
+      $row .= theme('views_rss_fields_element', array('key' => $key, 'element' => $value));
     }
   }
+  return '<item>' . $row . '</item>';
+}
 
-  $vars['row'] = $row;
+/**
+ * Element template
+ */
+function theme_views_rss_fields_element($variables) {
+  $key = $variables['key'];
+  $value = $variables['element'];
+
+  if ($key == 'enclosure') {
+    // file exists
+    if (isset($value['#raw'][0])) {
+      $file = (array)$value['#raw'][0]['raw'];
+      // Media field
+      if (isset($value['#raw'][0]['rendered']['file']['#entity_type']) &&
+          $value['#raw'][0]['rendered']['file']['#entity_type'] == 'media') {
+        $style = str_replace("styles_file_", "", $value['#raw'][0]['rendered']['file']['#formatter']);
+        $url = image_style_url($style, $file['uri']);
+      }
+      // Image field
+      else if (isset($value['#raw'][0]['rendered']['#image_style'])) {
+        $url = image_style_url($value['#raw'][0]['rendered']['#image_style'], $file['uri']);
+      }
+      // File field
+      else {
+        $url = file_create_url($file['uri']);
+      }
+      return '<enclosure url="' . $url . '" length="' . $file['filesize'] . '" type="' . $file['filemime'] . '" />';
+    }
+  }
+  else {
+    return "<$key>" . check_plain(htmlspecialchars_decode($value['#markup'])) . "</$key>";
+  }
 }
 
 /**
  * Theme function for feed icon.
  */
-function theme_views_rss_feed_icon($url, $title, $icon) {
-  if ($image = theme('image', $icon, t('Download RSS Feed'), $title)) {
-    return '<a href="'. check_url($url) .'" class="feed-icon">'. $image .'</a>';
+function theme_views_rss_feed_icon($variables) {
+  $url = $variables['0'];
+  $title = $variables['1'];
+  $icon = $variables['2'];
+  if ($image = theme('image', array('path' => $icon, 'width' => t('Download RSS Feed'), 'height' => $title))) {
+    return '<a href="' . check_url($url) . '" class="feed-icon">' . $image . '</a>';
   }
 }
 
 /**
  * Theme function for feed description.
  */
-function theme_views_rss_feed_description($description, $view) {
+function theme_views_rss_feed_description($variables) {
+  $description = $variables['0'];
+  $view = $variables['1'];
   return $description;
 }

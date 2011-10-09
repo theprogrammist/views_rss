@@ -2,4 +2,5 @@ name = "Views RSS"
 description = "Provides views plugin for that allows RSS Feeds from Views to be use fields"
 package = "Views Bonus Pack"
 dependencies[] = views
-core = "6.x"
+core = 7.x
+
