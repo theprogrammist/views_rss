@@ -4,9 +4,4 @@ package = "Views Bonus Pack"
 dependencies[] = views
 core = 7.x
 
-files[] = views_rss.module
-files[] = views/views-rss-fields-item.tpl.php
-files[] = views/views-view-views-rss-fields.tpl.php
 files[] = views/views_plugin_style_rss_fields.inc
-files[] = views/views_rss.views.inc
-files[] = views/views_rss_views_fields.theme.inc
