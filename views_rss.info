@@ -1,6 +1,19 @@
+; $Id: views_rss.info,v 1.1 2009/09/22 16:49:55 rsoden Exp $
 name = "Views RSS"
 description = "Provides views plugin for that allows RSS Feeds from Views to be use fields"
 package = "Views Bonus Pack"
 dependencies[] = views
 core = 7.x
+; Information added by drupal.org packaging script on 2010-09-10
+version = "6.x-1.0-beta5"
+core = 7.x
+project = "views_rss"
+datestamp = "1284147112"
 
+
+files[] = views_rss.module
+files[] = views/views-rss-fields-item.tpl.php
+files[] = views/views-view-views-rss-fields.tpl.php
+files[] = views/views_plugin_style_rss_fields.inc
+files[] = views/views_rss.views.inc
+files[] = views/views_rss_views_fields.theme.inc
