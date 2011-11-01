@@ -1,7 +1,6 @@
 name = "Views RSS"
-description = "Provides views plugin for that allows RSS Feeds from Views to be use fields"
+description = "Provides a views plugin that allows fields to be included in RSS feeds created using the Views module."
 package = Views
 dependencies[] = views
 core = 7.x
-
 files[] = views/views_plugin_style_rss_fields.inc
