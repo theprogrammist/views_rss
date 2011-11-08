@@ -183,7 +183,7 @@ class views_plugin_style_rss_fields extends views_plugin_style {
         // Link field causes problems.
         // Maybe this whole map_rows thing isn't the right way to go.
         // Do we need a custom row plugin?
-        if ($field_alias != 'unknown') {
+        if ($field_alias != 'unknown' && isset($row->{$field_alias})) {
           $renders[$count][$id]['#raw'] = $row->{$field_alias};
         }
       }
