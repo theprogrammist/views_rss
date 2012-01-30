@@ -12,7 +12,7 @@ class views_plugin_style_rss_fields extends views_plugin_style {
    */
   function attach_to($display_id, $path, $title) {
     $display = $this->view->display[$display_id]->handler;
-    $url_options = array();
+    $url_options = array('absolute' => TRUE);
     $input = $this->view->get_exposed_input();
     if ($input) {
       $url_options['query'] = $input;
@@ -30,7 +30,7 @@ class views_plugin_style_rss_fields extends views_plugin_style {
       }
 
       $this->view->feed_icon .= theme('feed_icon', array('url' => $url, 'title' => $title));
-      drupal_add_link(array(
+      drupal_add_html_head_link(array(
         'rel' => 'alternate',
         'type' => 'application/rss+xml',
         'title' => $title,
