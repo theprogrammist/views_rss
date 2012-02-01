@@ -4,11 +4,9 @@
  * Extend the view_plugin_style class to provide an RSS view style.
  */
 class views_plugin_style_rss_fields extends views_plugin_style {
+
   /**
    * Attach this view to another display as a feed.
-   *
-   * Provide basic functionality for all export style views like attaching a
-   * feed image link.
    */
   function attach_to($display_id, $path, $title) {
     $display = $this->view->display[$display_id]->handler;
@@ -19,7 +17,7 @@ class views_plugin_style_rss_fields extends views_plugin_style {
     }
 
     $url = url($this->view->get_url(NULL, $path), $url_options);
-    if ($display->has_path()) {
+    if ($display->has_path() && !$this->options['feed_settings']['feed_in_links']) {
       if (empty($this->preview)) {
         drupal_add_feed($url, $title);
       }
@@ -42,28 +40,25 @@ class views_plugin_style_rss_fields extends views_plugin_style {
   function option_definition() {
     $options = parent::option_definition();
 
-    $options['description'] = array(
-      'contains' => array(
-        'feed_description' => array('default' => '', 'translatable' => TRUE),
-      ),
-    );
-
-    $field_options = array();
-    foreach ($this->xml_fields() as $k => $option) {
-      $field_options[$k] = array('default' => '');
+    // Channel element defaults.
+    $channel_elements = $this->xml_channel_elements();
+    if (count($channel_elements)) {
+      foreach (array_keys($channel_elements) as $element_name) {
+        $options['channel'][$element_name] = array('default' => '');
+      }
     }
 
-    $options['fields'] = array(
-      'contains' => $field_options,
-    );
+    // Item element defaults.
+    $item_elements = $this->xml_item_elements();
+    if (count($item_elements)) {
+      foreach (array_keys($item_elements) as $element) {
+        list($namespace, $element_name) = $this->extract_element_names($element, 'core');
+        $options[$namespace][$element_name] = array('default' => '');
+      }
+    }
 
-    $options['georss'] = array(
-      'contains' => array(
-        'lat' => array('default' => ''),
-        'lon' => array('default' => ''),
-        'featureName' => array('default' => ''),
-      ),
-    );
+    // Other feed settings defaults.
+    $options['feed_settings']['feed_in_links'] = array('default' => '');
 
     return $options;
   }
@@ -86,20 +81,8 @@ class views_plugin_style_rss_fields extends views_plugin_style {
       );
     }
     else {
-      // Feed Description
-      $form['description'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Feed Description'),
-        '#collapsible' => TRUE,
-        '#collapsed' => TRUE,
-        '#weight' => -5,
-      );
-      $form['description']['feed_description'] = array(
-        '#type' => 'textarea',
-        '#default_value' => $this->options['description']['feed_description'],
-        '#description' => t('Description for this feed.  If left blank, the default site mission will be used'),
-      );
-      // Field Chooser
+
+      // Field chooser.
       $field_names = array('' => '--');
       foreach ($handlers as $field => $handler) {
         if ($label = $handler->label()) {
@@ -109,175 +92,169 @@ class views_plugin_style_rss_fields extends views_plugin_style {
           $field_names[$field] = $handler->ui_name();
         }
       }
-      $form['fields'] = array(
-        '#type' => 'fieldset',
-        '#title' => 'Field usage',
-        '#description' => t('Select the fields that relevant data for each element of the feed'),
-        '#collapsible' => TRUE,
-        '#collapsed' => TRUE,
-        '#weight' => 0,
-      );
-      foreach ($this->xml_fields() as $k => $option) {
-        $form['fields'][$k] = array(
-          '#type' => 'select',
-          '#title' => $option['title'],
-          '#description' => isset($option['description']) ? $option['description'] : '',
-          '#options' => $field_names,
-          '#default_value' => $this->options['fields'][$k],
-        );
+
+      // Channel elements settings.
+      $channel_elements = $this->xml_channel_elements();
+      if (count($channel_elements)) {
+        foreach ($channel_elements as $element => $definition) {
+          if (!isset($definition['configurable']) || $definition['configurable']) {
+            list($namespace, $element_name) = $this->extract_element_names($element, 'core');
+            // Add fieldset for namespace if not yet added.
+            if (!isset($form['channel'][$namespace])) {
+              $form['channel'][$namespace] = array(
+                '#type' => 'fieldset',
+                '#title' => t('Channel elements : @namespace', array('@namespace' => $namespace)),
+                '#description' => t('Select the fields that relevant data for each element of the "@namespace" namespace in <channel> element of this feed. See <a href="@guide_url">Views RSS configuration guide</a> for more information.', array(
+                  '@namespace' => $namespace,
+                  '@guide_url' => url('http://drupal.org/node/1344136'),
+                )),
+                '#collapsible' => TRUE,
+                '#collapsed' => TRUE,
+              );
+            }
+            $form['channel'][$namespace][$element_name] = array(
+              '#title' => isset($definition['title']) ? $definition['title'] : $element,
+              '#type' => isset($definition['type']) ? $definition['type'] : 'textfield',
+              '#default_value' => isset($this->options['channel'][$namespace][$element_name]) ? $this->options['channel'][$namespace][$element_name] : NULL,
+              '#description' => isset($definition['description']) ? $definition['description'] : NULL,
+              '#required' => isset($definition['required']) ? $definition['required'] : FALSE,
+            );
+            // Add help link if provided.
+            if (isset($definition['help']) && $definition['help']) {
+              $form['channel'][$namespace][$element_name]['#description'] .= ' ' . l('[?]', $definition['help'], array('attributes' => array('title' => t('Need more information?'))));
+            }
+          }
+        }
       }
-      // GeoRSS
-      $form['georss'] = array(
+
+      // Namespace <item> elements settings.
+      $item_elements = $this->xml_item_elements();
+      if (count($item_elements)) {
+        foreach ($item_elements as $element => $definition) {
+          if (!isset($definition['configurable']) || $definition['configurable']) {
+            list($namespace, $element_name) = $this->extract_element_names($element, 'core');
+            // Add fieldset for namespace if not yet added.
+            if (!isset($form['item'][$namespace])) {
+              $form['item'][$namespace] = array(
+                '#type' => 'fieldset',
+                '#title' => t('Item elements : @namespace', array('@namespace' => $namespace)),
+                '#description' => t('Select the fields that relevant data for each element of the "@namespace" namespace in this feed. See <a href="@guide_url">Views RSS configuration guide</a> for more information.', array(
+                  '@namespace' => $namespace,
+                  '@guide_url' => url('http://drupal.org/node/1344136'),
+                )),
+                '#collapsible' => TRUE,
+                '#collapsed' => TRUE,
+              );
+            }
+            $form['item'][$namespace][$element_name] = array(
+              '#type' => 'select',
+              '#title' => $definition['title'],
+              '#description' => isset($definition['description']) ? $definition['description'] : '',
+              '#options' => $field_names,
+              '#default_value' => isset($this->options['item'][$namespace][$element_name]) ? $this->options['item'][$namespace][$element_name] : NULL,
+            );
+            // Add help link if provided.
+            if (isset($definition['help']) && $definition['help']) {
+              $form['item'][$namespace][$element_name]['#description'] .= ' ' . l('[?]', $definition['help'], array('attributes' => array('title' => t('Need more information?'))));
+            }
+          }
+        }
+      }
+
+      // Other feed settings.
+      $form['feed_settings'] = array(
         '#type' => 'fieldset',
-        '#title' => t('GeoRSS'),
-        '#description' => t('Select fields that provide the latitude and longitude values'),
+        '#title' => t('Other feed settings'),
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
-        '#weight' => 5,
       );
-      $form['georss']['lat'] = array(
-        '#type' => 'select',
-        '#title' => t('Latitude'),
-        '#options' => $field_names,
-        '#default_value' => $this->options['georss']['lat'],
+      $form['feed_settings']['feed_in_links'] = array(
+        '#type' => 'checkbox',
+        '#default_value' => !empty($this->options['feed_settings']['feed_in_links']),
+        '#title' => t('Display feed icon in the links attached to the view.'),
+        '#weight' => 12,
       );
-      $form['georss']['lon'] = array(
-        '#type' => 'select',
-        '#title' => t('Longitude'),
-        '#options' => $field_names,
-        '#default_value' => $this->options['georss']['lon'],
-      );
-      $form['georss']['featureName'] = array(
-        '#type' => 'select',
-        '#title' => t('Feature Name'),
-        '#options' => $field_names,
-        '#default_value' => $this->options['georss']['featureName'],
-      );
+
     }
+  }
+
+  /**
+   * Returns an array of XML <channel> elements defined by other modules
+   * through hook_views_rss_channel_elements_alter() implementations.
+   */
+  function xml_channel_elements() {
+    $channel_elements = array();
+    drupal_alter('views_rss_channel_elements', $channel_elements);
+    return $channel_elements;
+  }
+
+  /**
+   * Returns an array of XML <item> elements defined by other modules
+   * through hook_views_rss_item_elements_alter() implementations.
+   */
+  function xml_item_elements() {
+    $item_elements = array();
+    drupal_alter('views_rss_item_elements', $item_elements);
+    return $item_elements;
+  }
+
+  /**
+   * Returns an array of XML namespaces defined by other modules
+   * through hook_views_rss_item_elements_alter() implementations.
+   */
+  function xml_namespaces() {
+    // Get namespaces provided by other modules.
+    $namespaces = array();
+    drupal_alter('views_rss_namespaces', $namespaces);
+    // Add namespaces not provided by other modules, but defined by elements
+    // and allow updating their URI references from view configuration.
+    foreach (array_keys($this->xml_item_elements()) as $element) {
+      list($namespace, $element_name) = $this->extract_element_names($element);
+      if ($namespace) {
+        $namespaces[$namespace] = isset($this->options['namespaces'][$namespace]) ? $this->options['namespaces'][$namespace] : $namespaces[$namespace];
+      }
+    }
+    return $namespaces;
+  }
+
+  /**
+   * Extracts and returns an array containing element namespace and name.
+   */
+  function extract_element_names($element, $core_namespace = '') {
+    if (!strstr($element, ':')) {
+      $element = $core_namespace . ':' . $element;
+    }
+    return explode(':', $element);
   }
 
   /**
    * Map views row result to an RSS item.
    */
   function map_rows($rows) {
-    // Fields must be rendered in order as of Views 2.3, so we will pre-render everything.
-    $renders = array();
+    // Fields must be pre-rendered starting from version 2.3 of Views module.
+    $rendered = array();
     $keys = array_keys($this->view->field);
-
     foreach ($rows as $count => $row) {
-      $this->view->row_index = $count;
       foreach ($keys as $id) {
-        $field = $this->view->field[$id];
-
-        // Wut, wuuuut??? crazy, yeah, but tere is no solid way of getting raw
-        // query result data.
-        // See: http://drupal.org/node/1172970
-        if ($field->field_alias == 'nid') {
-          $field_alias = 'field_' . $field->field;
-        }
-        else {
-          $field_alias = $field->field_alias;
-        }
-        $renders[$count][$id]['#markup'] = $field->theme($row);
-
-        // Link field causes problems.
-        // Maybe this whole map_rows thing isn't the right way to go.
-        // Do we need a custom row plugin?
-        if ($field_alias != 'unknown' && isset($row->{$field_alias})) {
-          $renders[$count][$id]['#raw'] = $row->{$field_alias};
-        }
+        $rendered[$count][$id] = $this->view->field[$id]->theme($row);
       }
     }
-
+    // Rewrite view rows to XML item rows.
     $items = array();
-    foreach ($renders as $id => $row) {
+    $item_elements = $this->xml_item_elements();
+    foreach ($rendered as $id => $row) {
       $item = array();
-      foreach (array_merge($this->options['fields'], $this->options['georss']) as $key => $val) {
-        if (isset($this->view->field[$val])) {
-          $item[$key] = $row[$val];
-        }
+      foreach (array_keys($item_elements) as $element) {
+        list($namespace, $element_name) = $this->extract_element_names($element, 'core');
+        // Assign values for all elements, not only those defined in view settings.
+        // If element value is not defined in view settings, let's just assign NULL.
+        // It will not be passed to final theme function anyway during processing
+        // taking place in template_preprocess_views_view_views_rss_fields().
+        $item[$element] = (isset($this->options['item'][$namespace][$element_name]) && isset($row[$this->options['item'][$namespace][$element_name]])) ? $row[$this->options['item'][$namespace][$element_name]] : NULL;
       }
       $items[] = $item;
     }
     return $items;
   }
 
-  /**
-   * An array of available XML fields to map to.
-   */
-  function xml_fields() {
-    return array(
-      'title' => array(
-        'title' => t('Title'),
-        'description' => t('RSS 2.0 title element'),
-      ),
-      'description' => array(
-        'title' => t('Description'),
-        'description' => t('RSS 2.0 description element'),
-      ),
-      'link' => array(
-        'title' => t('Link'),
-        'description' => t('RSS 2.0 link element'),
-      ),
-      'author' => array(
-        'title' => t('Author e-mail'),
-        'description' => t('RSS 2.0 author element'),
-      ),
-      'dc:creator' => array(
-        'title' => t('Author name'),
-        'description' => t('Dublin core creator element'),
-      ),
-      'category' => array(
-        'title' => t('category'),
-        'description' => t('RSS 2.0 category element'),
-      ),
-      'guid' => array(
-        'title' => t('guid'),
-        'description' => t('RSS 2.0 guid element'),
-      ),
-      'pubDate' => array(
-        'title' => t('pubDate'),
-        'description' => t('RSS 2.0 pubDate element'),
-      ),
-      'enclosure' => array(
-        'title' => t('enclosure'),
-        'description' => t('RSS 2.0 enclosure element'),
-      ),
-    );
-  }
-
-  /**
-   * Return an array of all known XML namespaces.
-   */
-  function xml_namespaces() {
-    return array(
-      'dc' => 'http://purl.org/dc/elements/1.1/',
-      'georss' => 'http://www.georss.org/georss',
-    );
-  }
-
-  /**
-   * Convenience method: return an XML Namespace for a given element.
-   *
-   * @param $elem
-   *   An XML element like 'title' or 'dc:creator'
-   *
-   * @return
-   *   An array where with a local and a global namespace identifier. Returns
-   *   FALSE if no corresponding namespace could be found.
-   */
-  function xml_namespace($elem) {
-    $e = explode(':', $elem);
-    if (is_array($e)) {
-      $local = array_shift($e);
-      $namespaces = $this->xml_namespaces($local);
-      if (isset($namespaces[$local])) {
-        return array(
-          'local' => $local,
-          'namespace' => $namespaces[$local],
-        );
-      }
-    }
-    return FALSE;
-  }
 }

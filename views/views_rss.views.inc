@@ -6,15 +6,15 @@
  */
 
 /**
- * Implements hook_views_style_plugins(). 
- * Adds view types to views UI interface().
+ * Implements hook_views_style_plugins().
+ * Adds view types to views UI interface.
  */
 function views_rss_views_plugins() {
   return array(
     'style' => array(
       'rss_fields' => array(
         'title' => t('RSS Feed - Fields'),
-        'help' => t('Outputs a RSS formatted feed'),
+        'help topic' => t('Outputs a RSS formatted feed'),
         'handler' => 'views_plugin_style_rss_fields',
         'theme' => 'views_view_views_rss_fields',
         'theme file' => 'views_rss_views_fields.theme.inc',

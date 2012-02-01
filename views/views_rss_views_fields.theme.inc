@@ -6,131 +6,156 @@
 function template_preprocess_views_view_views_rss_fields(&$vars) {
   $view = $vars['view'];
 
-  // Set basic info - title, description - about the feed
-  if ($view->display_handler->get_option('sitename_title')) {
-    $title = variable_get('site_name', 'Drupal');
-    if ($slogan = variable_get('site_slogan', '')) {
-      $title .= ' - ' . $slogan;
+  // Prepare <channel> elements.
+  $vars['channel'] = '';
+  foreach ($view->style_plugin->xml_channel_elements() as $element => $definition) {
+    list($namespace, $element_name) = $view->style_plugin->extract_element_names($element, 'core');
+    $value = isset($view->style_plugin->options['channel'][$namespace][$element_name]) ? $view->style_plugin->options['channel'][$namespace][$element_name] : NULL;
+    // Preprocess element value.
+    if (isset($definition['preprocess functions']) && is_array($definition['preprocess functions'])) {
+      foreach ($definition['preprocess functions'] as $preprocess_function) {
+        if (function_exists($preprocess_function)) {
+          $value = $preprocess_function(array(
+            'element' => $element,
+            'value' => $value,
+            'item' => $view->style_plugin->options['channel'],
+            'view' => $view,
+          ));
+        }
+      }
     }
+    // Make sure that $value is an array (in cases when Views' rendering,
+    // CCK formatter or preprocessor returns simple value).
+    if (!is_array($value)) {
+      $value = array('value' => $value);
+    }
+    // If there is no value and no arguments (in case of self-closing elements)
+    // already set for the element at this stage, it is not going to be set
+    // at any point further, so the element should not be added to the feed.
+    if (
+      (!isset($value['value']) || empty($value['value']))
+      && (!isset($value['arguments']) || empty($value['arguments']))
+    ) continue;
+    // Theme channel element value.
+    // If theme definition was provided by hook_views_rss_channel_elements_alter()
+    // implementation, but theme value was set to FALSE, it means that such
+    // element should not be themed here.
+    $theme_function = isset($definition['theme']) ? $definition['theme'] : 'views_rss_element';
+    if ($theme_function) {
+      $item_vars = array_merge(array(
+        'element' => $element,
+        'item' => $view->style_plugin->options['channel'],
+        'view' => $view,
+      ), $value);
+      $value = theme($theme_function, $item_vars);
+    }
+    $vars['channel'] .= $value;
   }
-  else {
-    $title = $view->get_title();
-  }
-  $vars['viewtitle'] = check_plain($title);
 
-  if ($view->style_options['description']['feed_description']) {
-    $description = $view->style_options['description']['feed_description'];
-  }
-  else {
-    $description = variable_get('site_mission', '');
-  }
-  $vars['description'] = theme('views_rss_feed_description', array('0' => $description, '1' => $view));
-
-  // Base URL for link tag
-  global $base_url;
-  $vars['link'] = $base_url;
-
-  // Grab the rows, push to field mapping function, gather namespaces.
-  $elements = $namespaces = array();
+  // Prepare <item> elements.
+  $elements = array();
   $rows = '';
+  $item_elements = $view->style_plugin->xml_item_elements();
   $items = $view->style_plugin->map_rows($vars['rows']);
-  foreach ($items as $item) {
-    // Special handling for GeoRSS.
-    if (isset($item['lat']) && is_numeric($item['lat']) && isset($item['lon']) && is_numeric($item['lon'])) {
-      $item['georss:point'] = $item['lat'] . ' ' .  $item['lon'];
+  foreach($items as $item) {
+    $row = '';
+    // Preprocess whole item array before processing and theming separate elements.
+    foreach (module_implements('views_rss_preprocess_item') as $module) {
+      $function = $module .'_views_rss_preprocess_item';
+      $item = $function(array(
+        'item' => $item,
+        'view' => $view,
+      ));
     }
-    if (isset($item['featureName'])) {
-      $item['georss:featureName'] = $item['featureName'];
+    foreach ($item as $element => $value) {
+      // Preprocess element initial value if required.
+      if (isset($item_elements[$element]['preprocess functions']) && is_array($item_elements[$element]['preprocess functions'])) {
+        foreach ($item_elements[$element]['preprocess functions'] as $preprocess_function) {
+          if (function_exists($preprocess_function)) {
+            $item_vars = array(
+              'element' => $element,
+              'value'   => $value,
+              'item'    => $item,
+              'view'    => $view,
+            );
+            $value = $preprocess_function($item_vars);
+          }
+        }
+      }
+      // Make sure that $value is an array (in cases when Views' rendering,
+      // CCK formatter or preprocessor returns simple value).
+      if (!is_array($value)) {
+        $value = array('value' => $value);
+      }
+      // If there is no value and no arguments (in case of self-closing elements)
+      // already set for the element at this stage, it is not going to be set
+      // at any point further, so the element should not be added to the feed.
+      if (
+        (!isset($value['value']) || empty($value['value']))
+        && (!isset($value['arguments']) || empty($value['arguments']))
+      ) continue;
+      // Theme item element value.
+      // If theme definition was provided by hook_views_rss_item_elements_alter()
+      // implementation, but theme value was set to FALSE, it means that such
+      // element should not be themed here (for example when it was already
+      // preformatted using CCK formatter - see <enclosure> element generated
+      // either from 'image' or 'filefield' CCK field).
+      $theme_function = isset($item_elements[$element]['theme']) ? $item_elements[$element]['theme'] : 'views_rss_element';
+      if ($theme_function) {
+        $item_vars = array_merge(array(
+          'element' => $element,
+          'item'    => $item,
+          'view'    => $view,
+        ), $value);
+        $value = theme($theme_function, $item_vars);
+      }
+      $row .= is_array($value) ? $value['value'] : $value;
     }
-    unset($item['lat']);
-    unset($item['lon']);
-    unset($item['featureName']);
-    $rows .= theme('views_rss_fields_item', array('item' => $item));
-    foreach ($item as $k => $v) {
-      $elements[$k] = $k;
-    }
+    $rows .= theme('views_rss_fields_item', array('row' => $row));
   }
   $vars['rows'] = $rows;
-  foreach ($elements as $e) {
-    if ($namespace = $view->style_plugin->xml_namespace($e)) {
-      $namespaces[] = "xmlns:{$namespace['local']}=\"{$namespace['namespace']}\"";
-    }
+
+  // Prepare namespaces.
+  $namespaces = array();
+  foreach ($view->style_plugin->xml_namespaces() as $namespace => $predefined_uri_reference) {
+    $uri_reference = (isset($view->style_plugin->options['namespaces'][$namespace])) ? $view->style_plugin->options['namespaces'][$namespace] : $predefined_uri_reference;
+    $namespaces[] = "xmlns:$namespace=\"$uri_reference\"";
   }
   $vars['namespaces'] = implode(' ', array_unique($namespaces));
 
-  // Set Headers
-  // During live preview we don't want to output the header since the contents
-  // of the feed are being displayed inside a normal HTML page.
-  if (empty($vars['view']->live_preview)) {
-    drupal_add_http_header('Content-Type', 'application/rss+xml; charset=utf-8');
-  }
+  // Set XML header.
+  drupal_add_http_header('Content-Type', 'application/rss+xml; charset=utf-8');
 }
 
 /**
- * Element template
+ * Default theme function for both <channel> and <item> elements.
  */
-function theme_views_rss_fields_item($variables) {
-  $item = $variables['item'];
-  // Loop through key=>value pairs
-  $row = '';
-  foreach ($item as $key => $value) {
-    if ($value) {
-      $row .= theme('views_rss_fields_element', array('key' => $key, 'element' => $value));
+function theme_views_rss_element($vars) {
+  $output = "<{$vars['element']}";
+  // Process element arguments if provided.
+  if (isset($vars['arguments']) && is_array($vars['arguments'])) {
+    $arguments = '';
+    foreach ($vars['arguments'] as $key => $value) {
+      $arguments .= " $key=\"$value\"";
     }
+    $output .= $arguments;
   }
-  return '<item>' . $row . '</item>';
-}
-
-/**
- * Element template
- */
-function theme_views_rss_fields_element($variables) {
-  $key = $variables['key'];
-  $value = $variables['element'];
-
-  if ($key == 'enclosure') {
-    // file exists
-    if (isset($value['#raw'][0])) {
-      $file = (array)$value['#raw'][0]['raw'];
-      // Media field
-      if (isset($value['#raw'][0]['rendered']['file']['#entity_type']) &&
-          $value['#raw'][0]['rendered']['file']['#entity_type'] == 'media') {
-        $style = str_replace("styles_file_", "", $value['#raw'][0]['rendered']['file']['#formatter']);
-        $url = image_style_url($style, $file['uri']);
-      }
-      // Image field
-      else if (isset($value['#raw'][0]['rendered']['#image_style'])) {
-        $url = image_style_url($value['#raw'][0]['rendered']['#image_style'], $file['uri']);
-      }
-      // File field
-      else {
-        $url = file_create_url($file['uri']);
-      }
-      return '<enclosure url="' . $url . '" length="' . $file['filesize'] . '" type="' . $file['filemime'] . '" />';
-    }
+  // Process element value if provided and close element.
+  if (isset($vars['value'])) {
+    $output .= ">{$vars['value']}</{$vars['element']}>\n";
   }
+  // Otherwise make it a self-closing element.
   else {
-    return "<$key>" . check_plain(htmlspecialchars_decode($value['#markup'])) . "</$key>";
+    $output .= " />\n";
   }
+  return $output;
 }
 
 /**
  * Theme function for feed icon.
  */
-function theme_views_rss_feed_icon($variables) {
-  $url = $variables['0'];
-  $title = $variables['1'];
-  $icon = $variables['2'];
-  if ($image = theme('image', array('path' => $icon, 'width' => t('Download RSS Feed'), 'height' => $title))) {
-    return '<a href="' . check_url($url) . '" class="feed-icon">' . $image . '</a>';
-  }
-}
-
-/**
- * Theme function for feed description.
- */
-function theme_views_rss_feed_description($variables) {
-  $description = $variables['0'];
-  $view = $variables['1'];
-  return $description;
-}
+//function theme_views_rss_feed_icon($vars) {
+//  if ($image = theme('image', array('path' => $icon, 'width' => t('Download RSS Feed'), 'height' => $vars['title']))) {
+//    return '<a href="' . check_url($url) . '" class="feed-icon">' . $image . '</a>';
+//  }
+//}
