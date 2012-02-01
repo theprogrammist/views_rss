@@ -43,7 +43,7 @@ class views_plugin_style_rss_fields extends views_plugin_style {
     // Channel element defaults.
     $channel_elements = $this->xml_channel_elements();
     if (count($channel_elements)) {
-      foreach (array_keys($channel_elements) as $element_name) {
+      foreach (array_keys($channel_elements) as $element) {
         list($namespace, $element_name) = $this->extract_element_names($element, 'core');
         $options['channel'][$namespace][$element_name] = array('default' => '');
       }

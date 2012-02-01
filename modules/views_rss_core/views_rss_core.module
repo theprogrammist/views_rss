@@ -82,7 +82,12 @@ function views_rss_core_views_rss_channel_elements_alter(&$elements) {
     'theme' => 'views_rss_core_element_skip',
     'help' => 'http://www.rssboard.org/rss-profile#element-channel-skipdays',
   );
-  // @TODO: add 'image', 'pubDate' and 'lastBuildDate', ignore 'textInput'.
+  $elements['lastBuildDate'] = array(
+    'configurable' => FALSE,
+    'preprocess functions' => array('views_rss_core_preprocess_channel_lastbuilddate'),
+    'help' => 'http://www.rssboard.org/rss-profile#element-channel-lastbuilddate',
+  );
+  // @TODO: add 'image' and 'pubDate', ignore 'textInput'.
 }
 
 /**
@@ -146,6 +151,19 @@ function views_rss_core_views_rss_item_elements_alter(&$elements) {
 }
 
 /**
+ * Implementation of hook_views_data_alter().
+ */
+function views_rss_core_views_query_alter(&$view, &$query) {
+  if ($view->style_plugin->definition['handler'] == 'views_plugin_style_rss_fields') {
+    // Select the most recent node creation date for <lastBuildDate> element.
+    $query->fields['views_rss_max_created'] = array(
+      'field' => '(SELECT MAX(created) FROM node)',
+      'alias' => 'views_rss_max_created',
+    );
+  }
+}
+
+/**
  * Preprocess function for channel <title> element.
  */
 function views_rss_core_preprocess_channel_title($vars) {
@@ -175,6 +193,15 @@ function views_rss_core_preprocess_channel_description($vars) {
 function views_rss_core_preprocess_channel_link($vars) {
   global $base_url;
   return $base_url;
+}
+
+/**
+ * Preprocess function for item <lastBuildDate> element.
+ */
+function views_rss_core_preprocess_channel_lastbuilddate($vars) {
+  if (isset($vars['view']->result[0]->views_rss_max_created)) {
+    return date('r', $vars['view']->result[0]->views_rss_max_created);
+  }
 }
 
 /**
