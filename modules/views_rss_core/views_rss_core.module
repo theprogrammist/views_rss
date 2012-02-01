@@ -188,16 +188,18 @@ function views_rss_core_preprocess_item_description($vars) {
  * Preprocess function for item <guid> element.
  */
 function views_rss_core_preprocess_item_guid($vars) {
-  $value = array(
-    'value' => $vars['value'],
-    'arguments' => array(
-      'isPermaLink' => 'false',
-    ),
-  );
-  if ((!isset($vars['item']['link']) || empty($vars['item']['link'])) && valid_url($value['value'], TRUE)) {
-    $value['arguments']['isPermaLink'] = 'true';
+  if ($vars['value']) {
+    $value = array(
+      'value' => $vars['value'],
+      'arguments' => array(
+        'isPermaLink' => 'false',
+      ),
+    );
+    if ((!isset($vars['item']['link']) || empty($vars['item']['link'])) && valid_url($value['value'], TRUE)) {
+      $value['arguments']['isPermaLink'] = 'true';
+    }
+    return $value;
   }
-  return $value;
 }
 
 /**

@@ -4,3 +4,4 @@ package = Views
 dependencies[] = views
 core = 7.x
 files[] = views/views_plugin_style_rss_fields.inc
+files[] = views/views_rss_handler_field_user_mail.inc

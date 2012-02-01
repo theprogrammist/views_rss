@@ -29,3 +29,10 @@ function views_rss_theme() {
     ),
   );
 }
+
+/**
+ * Implementation of hook_views_data_alter().
+ */
+function views_rss_views_data_alter(&$data) {
+  $data['users']['mail']['field']['handler'] = 'views_rss_handler_field_user_mail';
+}
