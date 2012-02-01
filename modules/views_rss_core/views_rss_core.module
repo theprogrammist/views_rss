@@ -28,6 +28,12 @@ function views_rss_core_views_rss_channel_elements_alter(&$elements) {
     )),
     'help' => 'http://www.rssboard.org/rss-profile#element-channel-language',
   );
+  $elements['category'] = array(
+    'title' => t('Category'),
+    'description' => t('Specify one or more categories that the channel belongs to. Separate multiple items with comma.'),
+    'theme' => 'views_rss_core_element_category',
+    'help' => 'http://www.rssboard.org/rss-profile#element-channel-category',
+  );
   $elements['copyright'] = array(
     'title' => t('Copyright'),
     'description' => t('Copyright notice for content in the channel.'),
@@ -42,12 +48,6 @@ function views_rss_core_views_rss_channel_elements_alter(&$elements) {
     'title' => t('Webmaster'),
     'description' => t('Email address for person responsible for technical issues relating to channel.'),
     'help' => 'http://www.rssboard.org/rss-profile#element-channel-webmaster',
-  );
-  $elements['category'] = array(
-    'title' => t('Category'),
-    'description' => t('Specify one or more categories that the channel belongs to. Separate multiple items with comma.'),
-    'theme' => 'views_rss_core_element_category',
-    'help' => 'http://www.rssboard.org/rss-profile#element-channel-category',
   );
   $elements['generator'] = array(
     'title' => t('Generator'),
