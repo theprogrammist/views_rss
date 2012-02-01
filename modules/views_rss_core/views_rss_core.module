@@ -82,12 +82,17 @@ function views_rss_core_views_rss_channel_elements_alter(&$elements) {
     'theme' => 'views_rss_core_element_skip',
     'help' => 'http://www.rssboard.org/rss-profile#element-channel-skipdays',
   );
+  $elements['pubDate'] = array(
+    'configurable' => FALSE,
+    'preprocess functions' => array('views_rss_core_preprocess_channel_date'),
+    'help' => 'http://www.rssboard.org/rss-profile#element-channel-pubdate',
+  );
   $elements['lastBuildDate'] = array(
     'configurable' => FALSE,
-    'preprocess functions' => array('views_rss_core_preprocess_channel_lastbuilddate'),
+    'preprocess functions' => array('views_rss_core_preprocess_channel_date'),
     'help' => 'http://www.rssboard.org/rss-profile#element-channel-lastbuilddate',
   );
-  // @TODO: add 'image' and 'pubDate', ignore 'textInput'.
+  // @TODO: add 'image', ignore 'textInput'.
 }
 
 /**
@@ -155,10 +160,15 @@ function views_rss_core_views_rss_item_elements_alter(&$elements) {
  */
 function views_rss_core_views_query_alter(&$view, &$query) {
   if ($view->style_plugin->definition['handler'] == 'views_plugin_style_rss_fields') {
-    // Select the most recent node creation date for <lastBuildDate> element.
+    // Select the most recent node creation date for <pubDate> element.
     $query->fields['views_rss_max_created'] = array(
       'field' => '(SELECT MAX(created) FROM node)',
       'alias' => 'views_rss_max_created',
+    );
+    // Select the most recent node update date for <lastBuildDate> element.
+    $query->fields['views_rss_max_changed'] = array(
+      'field' => '(SELECT MAX(changed) FROM node)',
+      'alias' => 'views_rss_max_changed',
     );
   }
 }
@@ -198,9 +208,10 @@ function views_rss_core_preprocess_channel_link($vars) {
 /**
  * Preprocess function for item <lastBuildDate> element.
  */
-function views_rss_core_preprocess_channel_lastbuilddate($vars) {
-  if (isset($vars['view']->result[0]->views_rss_max_created)) {
-    return date('r', $vars['view']->result[0]->views_rss_max_created);
+function views_rss_core_preprocess_channel_date($vars) {
+  $field = ($vars['element'] == 'pubDate') ? 'views_rss_max_created' : 'views_rss_max_changed';
+  if (isset($vars['view']->result[0]->$field)) {
+    return date('r', $vars['view']->result[0]->$field);
   }
 }
 
