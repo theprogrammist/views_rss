@@ -44,7 +44,8 @@ class views_plugin_style_rss_fields extends views_plugin_style {
     $channel_elements = $this->xml_channel_elements();
     if (count($channel_elements)) {
       foreach (array_keys($channel_elements) as $element_name) {
-        $options['channel'][$element_name] = array('default' => '');
+        list($namespace, $element_name) = $this->extract_element_names($element, 'core');
+        $options['channel'][$namespace][$element_name] = array('default' => '');
       }
     }
 
@@ -53,7 +54,7 @@ class views_plugin_style_rss_fields extends views_plugin_style {
     if (count($item_elements)) {
       foreach (array_keys($item_elements) as $element) {
         list($namespace, $element_name) = $this->extract_element_names($element, 'core');
-        $options[$namespace][$element_name] = array('default' => '');
+        $options['item'][$namespace][$element_name] = array('default' => '');
       }
     }
 
