@@ -10,7 +10,15 @@ function template_preprocess_views_view_views_rss_fields(&$vars) {
   $vars['channel'] = '';
   foreach ($view->style_plugin->xml_channel_elements() as $element => $definition) {
     list($namespace, $element_name) = $view->style_plugin->extract_element_names($element, 'core');
-    $value = isset($view->style_plugin->options['channel'][$namespace][$element_name]) ? $view->style_plugin->options['channel'][$namespace][$element_name] : NULL;
+    if (isset($view->style_plugin->options['channel'][$namespace][$element_name])) {
+      $value = $view->style_plugin->options['channel'][$namespace][$element_name];
+    }
+    elseif (isset($definition['default_value'])) {
+      $value = $definition['default_value'];
+    }
+    else {
+      $value = NULL;
+    }
     // Preprocess element value.
     if (isset($definition['preprocess functions']) && is_array($definition['preprocess functions'])) {
       foreach ($definition['preprocess functions'] as $preprocess_function) {

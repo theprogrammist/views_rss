@@ -113,10 +113,19 @@ class views_plugin_style_rss_fields extends views_plugin_style {
                 '#collapsed' => TRUE,
               );
             }
+            if (isset($this->options['channel'][$namespace][$element_name])) {
+              $default_value = $this->options['channel'][$namespace][$element_name];
+            }
+            elseif (isset($definition['default_value'])) {
+              $default_value = $definition['default_value'];
+            }
+            else {
+              $default_value = NULL;
+            }
             $form['channel'][$namespace][$element_name] = array(
               '#title' => isset($definition['title']) ? $definition['title'] : $element,
               '#type' => isset($definition['type']) ? $definition['type'] : 'textfield',
-              '#default_value' => isset($this->options['channel'][$namespace][$element_name]) ? $this->options['channel'][$namespace][$element_name] : NULL,
+              '#default_value' => $default_value,
               '#description' => isset($definition['description']) ? $definition['description'] : NULL,
               '#required' => isset($definition['required']) ? $definition['required'] : FALSE,
             );
