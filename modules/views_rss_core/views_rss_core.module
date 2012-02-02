@@ -161,14 +161,16 @@ function views_rss_core_views_rss_item_elements_alter(&$elements) {
 function views_rss_core_views_query_alter(&$view, &$query) {
   if ($view->style_plugin->definition['handler'] == 'views_plugin_style_rss_fields') {
     // Select the most recent node creation date for <pubDate> element.
-    $query->fields['views_rss_max_created'] = array(
-      'field' => '(SELECT MAX(created) FROM node)',
-      'alias' => 'views_rss_max_created',
+    $query->fields['views_rss_created'] = array(
+      'field' => 'created',
+      'table' => 'node',
+      'alias' => 'views_rss_created',
     );
     // Select the most recent node update date for <lastBuildDate> element.
-    $query->fields['views_rss_max_changed'] = array(
-      'field' => '(SELECT MAX(changed) FROM node)',
-      'alias' => 'views_rss_max_changed',
+    $query->fields['views_rss_changed'] = array(
+      'field' => 'changed',
+      'table' => 'node',
+      'alias' => 'views_rss_changed',
     );
   }
 }
@@ -186,7 +188,7 @@ function views_rss_core_preprocess_channel_title($vars) {
  */
 function views_rss_core_preprocess_channel_description($vars) {
   if (
-    isset($vars['view']->style_options['channel']['core']['description']) 
+    isset($vars['view']->style_options['channel']['core']['description'])
     && $vars['view']->style_options['channel']['core']['description']
   ) {
     $description = $vars['view']->style_options['channel']['core']['description'];
@@ -209,9 +211,15 @@ function views_rss_core_preprocess_channel_link($vars) {
  * Preprocess function for item <lastBuildDate> element.
  */
 function views_rss_core_preprocess_channel_date($vars) {
-  $field = ($vars['element'] == 'pubDate') ? 'views_rss_max_created' : 'views_rss_max_changed';
-  if (isset($vars['view']->result[0]->$field)) {
-    return date('r', $vars['view']->result[0]->$field);
+  $field = ($vars['element'] == 'pubDate') ? 'views_rss_created' : 'views_rss_changed';
+  if (count($vars['view']->result) > 0) {
+    $max_date = 0;
+    foreach ($vars['view']->result as $row) {
+      if ($row->$field > $max_date) {
+        $max_date = $row->$field;
+      }
+    }
+    return date('r', $max_date);
   }
 }
 
