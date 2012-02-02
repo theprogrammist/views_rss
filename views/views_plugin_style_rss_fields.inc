@@ -59,7 +59,8 @@ class views_plugin_style_rss_fields extends views_plugin_style {
     }
 
     // Other feed settings defaults.
-    $options['feed_settings']['feed_in_links'] = array('default' => '');
+    $options['feed_settings']['feed_in_links'] = array('default' => 0);
+    $options['feed_settings']['exposed_in_source'] = array('default' => 0);
 
     return $options;
   }
@@ -182,7 +183,14 @@ class views_plugin_style_rss_fields extends views_plugin_style {
         '#type' => 'checkbox',
         '#default_value' => !empty($this->options['feed_settings']['feed_in_links']),
         '#title' => t('Display feed icon in the links attached to the view.'),
-        '#weight' => 12,
+        '#weight' => 1,
+      );
+      $form['feed_settings']['exposed_in_source'] = array(
+        '#type' => 'checkbox',
+        '#title' => t("Add exposed filter values to <em>url</em> argument of feed &lt;source&gt; element"),
+        '#description' => t('By default &lt;source&gt; element of each feed &lt;item&gt; will point to main feed URL (including arguments if provided). Enabling this option will add also all exposed filter values to the feed URL in &lt;source&gt; element.'),
+        '#default_value' => !empty($this->options['feed_settings']['exposed_in_source']),
+        '#weight' => 2,
       );
 
     }

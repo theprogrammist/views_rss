@@ -253,12 +253,18 @@ function views_rss_core_preprocess_item_guid($vars) {
  */
 function views_rss_core_preprocess_item_source($vars) {
   global $base_url;
-  return array(
+  $value = array(
     'value' => $vars['view']->get_title(),
     'arguments' => array(
       'url' => $base_url . '/' . $vars['view']->get_url(),
     ),
   );
+  // Add exposed filter values if enabled.
+  $exposed_input = $vars['view']->get_exposed_input();
+  if ($vars['view']->style_plugin->options['feed_settings']['exposed_in_source'] && $exposed_input) {
+    $value['arguments']['url'] .= '?' . http_build_query($exposed_input, '', '&');
+  }
+  return $value;
 }
 
 /**
