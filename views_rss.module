@@ -1,12 +1,19 @@
 <?php
 
 /**
+ * @file
+ * Module providing fields-based views style plugin for RSS feed generation.
+ */
+
+define('VIEWS_RSS_PATH', drupal_get_path('module', 'views_rss'));
+
+/**
  * Implements hook_views_api().
  */
 function views_rss_views_api() {
   return array(
     'api' => 3,
-    'path' => drupal_get_path('module', 'views_rss') . '/views',
+    'path' => VIEWS_RSS_PATH . '/views',
   );
 }
 
@@ -14,25 +21,165 @@ function views_rss_views_api() {
  * Implements hook_theme().
  */
 function views_rss_theme() {
-  $path = drupal_get_path('module', 'views_rss');
   return array(
     'views_rss_fields_item' => array(
-      'variables' => array('row' => NULL),
-      'file' => 'views_rss_views_fields.theme.inc',
+      'variables' => array('row' => NULL, 'view' => NULL),
+      'file' => 'theme.inc',
       'template' => 'views-rss-fields-item',
-      'path' => "$path/views",
+      'path' => VIEWS_RSS_PATH . '/theme',
     ),
     'views_rss_element' => array(
       'variables' => array('vars' => NULL),
-      'file' => 'views_rss_views_fields.theme.inc',
-      'path' => "$path/views",
+      'file' => 'theme.inc',
+      'path' => VIEWS_RSS_PATH . '/theme',
     ),
   );
 }
 
 /**
- * Implementation of hook_views_data_alter().
+ * Returns an array of namespaces defined by other modules
+ * with hook_views_rss_namespaces() and optionally altered with
+ * hook_views_rss_namespaces_alter() implementations.
  */
-function views_rss_views_data_alter(&$data) {
-  $data['users']['mail']['field']['handler'] = 'views_rss_handler_field_user_mail';
+function views_rss_get_namespaces() {
+  static $namespaces = array();
+  if (empty($namespaces)) {
+    $cached = cache_get('views_rss:namespaces', 'cache_views');
+    if (is_object($cached) && !empty($cached->data)) {
+      $namespaces = $cached->data;
+    }
+    else {
+      // Fetch namespaces provided by other modules. We need to manually call
+      // each module so that we can know which module a given item came from.
+      foreach (module_implements('views_rss_namespaces') as $module) {
+        $module_namespaces = call_user_func($module . '_views_rss_namespaces');
+        if (isset($module_namespaces) && is_array($module_namespaces)) {
+          $namespaces[$module] = $module_namespaces;
+        }
+      }
+      // Allow other modules to alter obtained namespaces.
+      drupal_alter('views_rss_namespaces', $namespaces);
+      // Add namespaces not defined by any hook_views_rss_namespaces(),
+      // but used in any of defined <channel> or <item> elements.
+      foreach (views_rss_get_channel_elements() as $module => $elements) {
+        foreach (array_keys($elements) as $element) {
+          list($namespace, $element_name) = views_rss_extract_element_names($element);
+          if ($namespace && !isset($namespaces[$module][$namespace])) {
+            $namespaces[$module][$namespace] = NULL;
+          }
+        }
+      }
+      foreach (views_rss_get_item_elements() as $module => $elements) {
+        foreach (array_keys($elements) as $element) {
+          list($namespace, $element_name) = views_rss_extract_element_names($element);
+          if ($namespace && !isset($namespaces[$module][$namespace])) {
+            $namespaces[$module][$namespace] = NULL;
+          }
+        }
+      }
+      // Store it infinitely in cache (rebuild only on cache clear).
+      cache_set('views_rss:namespaces', $namespaces, 'cache_views');
+    }
+  }
+  return $namespaces;
+}
+
+/**
+ * Returns an array of channel elements defined by other modules
+ * with hook_views_rss_channel_elements() and optionally altered with
+ * hook_views_rss_channel_elements_alter() implementations.
+ */
+function views_rss_get_channel_elements() {
+  static $channel_elements = array();
+  if (empty($channel_elements)) {
+    $cached = cache_get('views_rss:channel_elements', 'cache_views');
+    if (is_object($cached) && !empty($cached->data)) {
+      $channel_elements = $cached->data;
+    }
+    else {
+      // Fetch channel provided by other modules. We need to manually call
+      // each module so that we can know which module a given item came from.
+      foreach (module_implements('views_rss_channel_elements') as $module) {
+        $module_channel_elements = call_user_func($module . '_views_rss_channel_elements');
+        if (isset($module_channel_elements) && is_array($module_channel_elements)) {
+          $channel_elements[$module] = $module_channel_elements;
+        }
+      }
+      // Allow other modules to alter obtained channel elements.
+      drupal_alter('views_rss_channel_elements', $channel_elements);
+      // Store it infinitely in cache (rebuild only on cache clear).
+      cache_set('views_rss:channel_elements', $channel_elements, 'cache_views');
+    }
+  }
+  return $channel_elements;
+}
+
+/**
+ * Returns an array of item elements defined by other modules
+ * with hook_views_rss_item_elements() and optionally altered with
+ * hook_views_rss_item_elements_alter() implementations.
+ */
+function views_rss_get_item_elements() {
+  static $item_elements = array();
+  if (empty($item_elements)) {
+    $cached = cache_get('views_rss:item_elements', 'cache_views');
+    if (is_object($cached) && !empty($cached->data)) {
+      $item_elements = $cached->data;
+    }
+    else {
+      // Fetch item elements provided by other modules. We need to manually call
+      // each module so that we can know which module a given item came from.
+      foreach (module_implements('views_rss_item_elements') as $module) {
+        $module_item_elements = call_user_func($module . '_views_rss_item_elements');
+        if (isset($module_item_elements) && is_array($module_item_elements)) {
+          $item_elements[$module] = $module_item_elements;
+        }
+      }
+      // Allow other modules to alter obtained item elements.
+      drupal_alter('views_rss_item_elements', $item_elements);
+      // Store it infinitely in cache (rebuild only on cache clear).
+      cache_set('views_rss:item_elements', $item_elements, 'cache_views');
+    }
+  }
+  return $item_elements;
+}
+
+/**
+ * Returns an array of views_query_alter() definitions 
+ * to fetch values for <pubDate> and <lastBuildDate> feed item 
+ * elements based on current view's base table.
+ */
+function views_rss_get_date_sources() {
+  static $date_sources = array();
+  if (empty($date_sources)) {
+    $cached = cache_get('views_rss:date_sources', 'cache_views');
+    if (is_object($cached) && !empty($cached->data)) {
+      $date_sources = $cached->data;
+    }
+    else {
+      // Fetch date sources provided by other modules. We need to manually call
+      // each module so that we can know which module a given item came from.
+      foreach (module_implements('views_rss_date_sources') as $module) {
+        $module_date_sources = call_user_func($module . '_views_rss_date_sources');
+        if (isset($module_date_sources) && is_array($module_date_sources)) {
+          $date_sources[$module] = $module_date_sources;
+        }
+      }
+      // Allow other modules to alter obtained item elements.
+      drupal_alter('views_rss_date_sources', $date_sources);
+      // Store it infinitely in cache (rebuild only on cache clear).
+      cache_set('views_rss:date_sources', $date_sources, 'cache_views');
+    }
+  }
+  return $date_sources;
+}
+
+/**
+ * Extracts and returns an array containing element namespace and name.
+ */
+function views_rss_extract_element_names($element, $core_namespace = '') {
+  if (!strstr($element, ':')) {
+    $element = $core_namespace . ':' . $element;
+  }
+  return explode(':', $element);
 }
