@@ -152,42 +152,36 @@ function views_rss_core_views_rss_item_elements() {
 function views_rss_core_views_rss_date_sources() {
   $sources['node'] = array(
     'pubDate' => array(
-      'field' => 'created',
       'table' => 'node',
-      'alias' => 'pubDate',
+      'field' => 'created',
     ),
     'lastBuildDate' => array(
-      'field' => 'changed',
       'table' => 'node',
-      'alias' => 'lastBuildDate',
+      'field' => 'changed',
     ),
   );
   $sources['node_revisions'] = array(
     'pubDate' => array(
-      'field' => 'timestamp',
       'table' => 'node_revisions',
-      'alias' => 'pubDate',
+      'field' => 'timestamp',
     ),
   );
   $sources['comments'] = array(
-    'pubDate' => array(
-      'field' => 'timestamp',
+    'lastBuildDate' => array(
       'table' => 'comments',
-      'alias' => 'pubDate',
+      'field' => 'timestamp',
     ),
   );
   $sources['files'] = array(
     'pubDate' => array(
-      'field' => 'timestamp',
       'table' => 'files',
-      'alias' => 'pubDate',
+      'field' => 'timestamp',
     ),
   );
   $sources['users'] = array(
     'pubDate' => array(
-      'field' => 'created',
       'table' => 'users',
-      'alias' => 'pubDate',
+      'field' => 'created',
     ),
   );
   return $sources;

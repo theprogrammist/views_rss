@@ -163,6 +163,14 @@ function views_rss_get_date_sources() {
       foreach (module_implements('views_rss_date_sources') as $module) {
         $module_date_sources = call_user_func($module . '_views_rss_date_sources');
         if (isset($module_date_sources) && is_array($module_date_sources)) {
+          // Add field aliases if not provided by hook.
+          foreach ($module_date_sources as $base_table => $elements) {
+            foreach ($elements as $element_name => $definition) {
+              if (!isset($definition['alias'])) {
+                $module_date_sources[$base_table][$element_name]['alias'] = $element_name;
+              }
+            }
+          }
           $date_sources[$module] = $module_date_sources;
         }
       }
