@@ -46,7 +46,7 @@ class views_rss_plugin_style_fields extends views_plugin_style {
     $namespaces = views_rss_get_namespaces();
     if (count($namespaces)) {
       foreach ($namespaces as $module => $module_namespaces) {
-        foreach ($module_namespaces as $namespace => $predefined_uri_reference) {
+        foreach (array_keys($module_namespaces) as $namespace) {
           $options['namespaces'][$module][$namespace] = array('default' => NULL);
         }
       }
@@ -199,8 +199,8 @@ class views_rss_plugin_style_fields extends views_plugin_style {
       $namespaces = views_rss_get_namespaces();
       if (count($namespaces)) {
         foreach ($namespaces as $module => $module_namespaces) {
-          foreach ($module_namespaces as $namespace => $predefined_uri_reference) {
-            if (empty($predefined_uri_reference)) {
+          foreach ($module_namespaces as $namespace => $definition) {
+            if (empty($definition['uri'])) {
               // Add fieldset for namespace if not yet added.
               if (!isset($form['namespaces'])) {
                 $form['namespaces'] = array(

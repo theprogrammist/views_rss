@@ -9,7 +9,10 @@
  * Implements hook_views_rss_namespaces().
  */
 function views_rss_dc_views_rss_namespaces() {
-  $namespaces['dc'] = 'http://purl.org/dc/elements/1.1/';
+  $namespaces['dc'] = array(
+    'prefix' => 'xmlns',
+    'uri' => 'http://purl.org/dc/elements/1.1/',
+  );
   return $namespaces;
 }
 

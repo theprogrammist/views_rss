@@ -61,11 +61,12 @@ function views_rss_get_namespaces() {
       drupal_alter('views_rss_namespaces', $namespaces);
       // Add namespaces not defined by any hook_views_rss_namespaces(),
       // but used in any of defined <channel> or <item> elements.
+      // Let's also add "xmlns" prefix by default to such namespaces.
       foreach (views_rss_get_channel_elements() as $module => $elements) {
         foreach (array_keys($elements) as $element) {
           list($namespace, $element_name) = views_rss_extract_element_names($element);
           if ($namespace && !isset($namespaces[$module][$namespace])) {
-            $namespaces[$module][$namespace] = NULL;
+            $namespaces[$module][$namespace] = array('prefix' => 'xmlns', 'uri' => NULL);
           }
         }
       }
@@ -73,7 +74,7 @@ function views_rss_get_namespaces() {
         foreach (array_keys($elements) as $element) {
           list($namespace, $element_name) = views_rss_extract_element_names($element);
           if ($namespace && !isset($namespaces[$module][$namespace])) {
-            $namespaces[$module][$namespace] = NULL;
+            $namespaces[$module][$namespace] = array('prefix' => 'xmlns', 'uri' => NULL);
           }
         }
       }

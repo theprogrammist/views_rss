@@ -135,15 +135,24 @@ function template_preprocess_views_view_views_rss(&$vars) {
   // Prepare namespaces.
   $namespaces = array();
   foreach (views_rss_get_namespaces() as $module => $module_namespaces) {
-    foreach ($module_namespaces as $namespace => $predefined_uri_reference) {
-      if (!empty($predefined_uri_reference)) {
-        $namespaces[$namespace] = "xmlns:$namespace=\"$predefined_uri_reference\"";
-      }
+    foreach ($module_namespaces as $namespace => $definition) {
+      // Check if definition provided through modules hooks
+      // should be overwritten by module configuration.
       if (
         isset($view->style_plugin->options['namespaces'][$module][$namespace])
         && !empty($view->style_plugin->options['namespaces'][$module][$namespace])
       ) {
-        $namespaces[$namespace] = "xmlns:$namespace=\"{$view->style_plugin->options['namespaces'][$module][$namespace]}\"";
+        $definition['uri'] = $view->style_plugin->options['namespaces'][$module][$namespace];
+      }
+      if (isset($definition['uri']) && !empty($definition['uri'])) {
+        // Namespaces with prefix, for example: xml:base="" or xmlns:dc=""
+        if (isset($definition['prefix']) && !empty($definition['prefix'])) {
+          $namespaces[$namespace] = "{$definition['prefix']}:$namespace=\"{$definition['uri']}\"";
+        }
+        // Namespaces without prefix, for example: content="" or foaf=""
+        else {
+          $namespaces[$namespace] = "$namespace=\"{$definition['uri']}\"";
+        }
       }
     }
   }
