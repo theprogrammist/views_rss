@@ -274,7 +274,7 @@ class views_rss_plugin_style_fields extends views_plugin_style {
           // Assign values for all elements, not only those defined in view settings.
           // If element value is not defined in view settings, let's just assign NULL.
           // It will not be passed to final theme function anyway during processing
-          // taking place in template_preprocess_views_view_views_rss_fields().
+          // taking place in template_preprocess_views_view_views_rss().
           if (
             isset($this->options['item'][$namespace][$module][$element_name]) 
             && isset($row[$this->options['item'][$namespace][$module][$element_name]])

@@ -22,10 +22,10 @@ function views_rss_views_api() {
  */
 function views_rss_theme() {
   return array(
-    'views_rss_fields_item' => array(
+    'views_view_views_rss_fields' => array(
       'variables' => array('row' => NULL, 'view' => NULL),
       'file' => 'theme.inc',
-      'template' => 'views-rss-fields-item',
+      'template' => 'views-view-views-rss-fields',
       'path' => VIEWS_RSS_PATH . '/theme',
     ),
     'views_rss_element' => array(

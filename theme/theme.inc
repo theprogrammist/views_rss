@@ -6,9 +6,9 @@
  */
 
 /**
- * Template preprocessor for views-view-views-rss-fields.tpl.php.
+ * Template preprocessor for views-view-views-rss.tpl.php.
  */
-function template_preprocess_views_view_views_rss_fields(&$vars) {
+function template_preprocess_views_view_views_rss(&$vars) {
   $view = $vars['view'];
 
   // Prepare <channel> elements.
@@ -128,7 +128,7 @@ function template_preprocess_views_view_views_rss_fields(&$vars) {
         $row .= is_array($value) ? $value['value'] : $value;
       }
     }
-    $rows .= theme('views_rss_fields_item', array('row' => $row, 'view' => $view));
+    $rows .= theme('views_view_views_rss_fields', array('row' => $row, 'view' => $view));
   }
   $vars['rows'] = $rows;
 
@@ -154,20 +154,20 @@ function template_preprocess_views_view_views_rss_fields(&$vars) {
 }
 
 /**
- * Template preprocessor for views-rss-fields-item.tpl.php.
+ * Template preprocessor for views-view-views-rss-fields.tpl.php.
  */
-function template_preprocess_views_rss_fields_item(&$vars) {
-  $base = 'views-rss-fields-item--';
-  // views-rss-fields-item--feed.tpl.php
-  $vars['template_files'][] = $base . $vars['view']->display[$vars['view']->current_display]->display_plugin;
-  // views-rss-fields-item--feed-1.tpl.php
-  $vars['template_files'][] = $base . $vars['view']->current_display;
-  // views-rss-fields-item--views-rss.tpl.php
-  $vars['template_files'][] = $base . $vars['view']->name;
-  // views-rss-fields-item--views-rss--feed.tpl.php
-  $vars['template_files'][] = $base . $vars['view']->name . '--' . $vars['view']->display[$vars['view']->current_display]->display_plugin;
-  // views-rss-fields-item--views-rss--feed-1.tpl.php
-  $vars['template_files'][] = $base . $vars['view']->name . '--' . $vars['view']->current_display;
+function template_preprocess_views_view_views_rss_fields(&$vars) {
+  $base = 'views_view_views_rss_fields__';
+  // views-view-views-rss-fields--<current_display_plugin>.tpl.php
+  $vars['theme_hook_suggestions'][] = $base . $vars['view']->display[$vars['view']->current_display]->display_plugin;
+  // views-view-views-rss-fields--<current_display_name>.tpl.php
+  $vars['theme_hook_suggestions'][] = $base . $vars['view']->current_display;
+  // views-view-views-rss-fields--<view_name>.tpl.php
+  $vars['theme_hook_suggestions'][] = $base . $vars['view']->name;
+  // views-view-views-rss-fields--<view_name>--<current_display_plugin>.tpl.php
+  $vars['theme_hook_suggestions'][] = $base . $vars['view']->name . '__' . $vars['view']->display[$vars['view']->current_display]->display_plugin;
+  // views-view-views-rss-fields--<view_name>--<current_display_name>.tpl.php
+  $vars['theme_hook_suggestions'][] = $base . $vars['view']->name . '__' . $vars['view']->current_display;
 }
 
 /**

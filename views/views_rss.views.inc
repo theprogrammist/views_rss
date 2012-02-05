@@ -18,7 +18,7 @@ function views_rss_views_plugins() {
         'help' => t('Outputs a RSS formatted feed'),
         'handler' => 'views_rss_plugin_style_fields',
         'path' => VIEWS_RSS_PATH . '/views',
-        'theme' => 'views_view_views_rss_fields',
+        'theme' => 'views_view_views_rss',
         'theme file' => 'theme.inc',
         'theme path' => VIEWS_RSS_PATH . '/theme',
         'uses row plugin' => FALSE,
