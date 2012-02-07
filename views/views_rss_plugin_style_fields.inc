@@ -138,8 +138,8 @@ class views_rss_plugin_style_fields extends views_plugin_style {
               }
               $form['channel'][$namespace][$module][$element_name] = array(
                 '#type' => isset($definition['type']) ? $definition['type'] : 'textfield',
-                '#title' => check_plain(isset($definition['title']) ? $definition['title'] : $element_name),
-                '#description' => check_plain(isset($definition['description']) ? $definition['description'] : NULL),
+                '#title' => filter_xss(isset($definition['title']) ? $definition['title'] : $element_name),
+                '#description' => filter_xss(isset($definition['description']) ? $definition['description'] : NULL),
                 '#default_value' => $default_value,
                 '#required' => isset($definition['required']) ? $definition['required'] : FALSE,
               );
@@ -180,8 +180,8 @@ class views_rss_plugin_style_fields extends views_plugin_style {
               }
               $form['item'][$namespace][$module][$element_name] = array(
                 '#type' => 'select',
-                '#title' => check_plain(isset($definition['title']) ? $definition['title'] : $element_name),
-                '#description' => check_plain(isset($definition['description']) ? $definition['description'] : NULL),
+                '#title' => filter_xss(isset($definition['title']) ? $definition['title'] : $element_name),
+                '#description' => filter_xss(isset($definition['description']) ? $definition['description'] : NULL),
                 '#options' => $field_names,
                 '#default_value' => $default_value,
               );
@@ -194,7 +194,7 @@ class views_rss_plugin_style_fields extends views_plugin_style {
         }
       }
 
-      // Undefined namespaces derived from <channel> and/or <item> 
+      // Undefined namespaces derived from <channel> and/or <item>
       // elements defined by extension modules.
       $namespaces = views_rss_get_namespaces();
       if (count($namespaces)) {
@@ -276,7 +276,7 @@ class views_rss_plugin_style_fields extends views_plugin_style {
           // It will not be passed to final theme function anyway during processing
           // taking place in template_preprocess_views_view_views_rss().
           if (
-            isset($this->options['item'][$namespace][$module][$element_name]) 
+            isset($this->options['item'][$namespace][$module][$element_name])
             && isset($row[$this->options['item'][$namespace][$module][$element_name]])
           ) {
             $item[$module][$element] = $row[$this->options['item'][$namespace][$module][$element_name]];
