@@ -192,7 +192,7 @@ function views_rss_core_views_rss_date_sources() {
  */
 function views_rss_core_views_query_alter(&$view, &$query) {
   if ($view->style_plugin->definition['handler'] == 'views_rss_plugin_style_fields') {
-    $date_sources = views_rss_get_date_sources();
+    $date_sources = views_rss_get('date_sources');
     foreach (array_keys($date_sources) as $module) {
       if (isset($date_sources[$module][$view->base_table])) {
         // Select the most recent node creation date for <pubDate> element.

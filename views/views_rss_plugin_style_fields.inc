@@ -43,7 +43,7 @@ class views_rss_plugin_style_fields extends views_plugin_style {
     $options = parent::option_definition();
 
     // Namespace defaults.
-    $namespaces = views_rss_get_namespaces();
+    $namespaces = views_rss_get('namespaces');
     if (count($namespaces)) {
       foreach ($namespaces as $module => $module_namespaces) {
         foreach (array_keys($module_namespaces) as $namespace) {
@@ -53,7 +53,7 @@ class views_rss_plugin_style_fields extends views_plugin_style {
     }
 
     // Channel element defaults.
-    $channel_elements = views_rss_get_channel_elements();
+    $channel_elements = views_rss_get('channel_elements');
     if (count($channel_elements)) {
       foreach ($channel_elements as $module => $module_channel_elements) {
         foreach (array_keys($module_channel_elements) as $element) {
@@ -64,7 +64,7 @@ class views_rss_plugin_style_fields extends views_plugin_style {
     }
 
     // Item element defaults.
-    $item_elements = views_rss_get_item_elements();
+    $item_elements = views_rss_get('item_elements');
     if (count($item_elements)) {
       foreach ($item_elements as $module => $module_item_elements) {
         foreach (array_keys($module_item_elements) as $element) {
@@ -107,8 +107,11 @@ class views_rss_plugin_style_fields extends views_plugin_style {
         }
       }
 
+      // Element groups could be used both in channel and item settings.
+      $element_groups = views_rss_get('element_groups');
+
       // Channel elements settings.
-      $channel_elements = views_rss_get_channel_elements();
+      $channel_elements = views_rss_get('channel_elements');
       if (count($channel_elements)) {
         foreach ($channel_elements as $module => $module_channel_elements) {
           foreach ($module_channel_elements as $element => $definition) {
@@ -127,6 +130,7 @@ class views_rss_plugin_style_fields extends views_plugin_style {
                   '#collapsed' => TRUE,
                 );
               }
+              // Prepare form element.
               if (isset($this->options['channel'][$namespace][$module][$element_name])) {
                 $default_value = $this->options['channel'][$namespace][$module][$element_name];
               }
@@ -136,7 +140,7 @@ class views_rss_plugin_style_fields extends views_plugin_style {
               else {
                 $default_value = NULL;
               }
-              $form['channel'][$namespace][$module][$element_name] = array(
+              $form_item = array(
                 '#type' => isset($definition['type']) ? $definition['type'] : 'textfield',
                 '#title' => filter_xss(isset($definition['title']) ? $definition['title'] : $element_name),
                 '#description' => filter_xss(isset($definition['description']) ? $definition['description'] : NULL),
@@ -145,7 +149,28 @@ class views_rss_plugin_style_fields extends views_plugin_style {
               );
               // Add help link if provided.
               if (isset($definition['help']) && $definition['help']) {
-                $form['channel'][$namespace][$module][$element_name]['#description'] .= ' ' . l('[?]', $definition['help'], array('attributes' => array('title' => t('Need more information?'))));
+                $form_item['#description'] .= ' ' . l('[?]', $definition['help'], array('attributes' => array('title' => t('Need more information?'))));
+              }
+              // Check if element should be displayed in a subgroup.
+              if (isset($definition['group']) && $definition['group']) {
+                // Add a subgroup to the form if it not yet added.
+                if (!isset($form['channel'][$namespace][$module][$definition['group']])) {
+                  // Does module provide the group definition?
+                  $group_title = !empty($element_groups[$module][$definition['group']]['title']) ? $element_groups[$module][$definition['group']]['title'] : $definition['group'];
+                  $group_description = !empty($element_groups[$module][$definition['group']]['description']) ? $element_groups[$module][$definition['group']]['description'] : NULL;
+                  $form['channel'][$namespace][$module][$definition['group']] = array(
+                    '#type' => 'fieldset',
+                    '#title' => filter_xss($group_title),
+                    '#description' => filter_xss($group_description),
+                    '#collapsible' => TRUE,
+                    '#collapsed' => TRUE,
+                  );
+                }
+                $form['channel'][$namespace][$module][$definition['group']][$element_name] = $form_item;
+              }
+              // Display element normally (not within a subgroup).
+              else {
+                $form['channel'][$namespace][$module][$element_name] = $form_item;
               }
             }
           }
@@ -153,7 +178,7 @@ class views_rss_plugin_style_fields extends views_plugin_style {
       }
 
       // Item elements settings.
-      $item_elements = views_rss_get_item_elements();
+      $item_elements = views_rss_get('item_elements');
       if (count($item_elements)) {
         foreach ($item_elements as $module => $module_item_elements) {
           foreach ($module_item_elements as $element => $definition) {
@@ -172,13 +197,14 @@ class views_rss_plugin_style_fields extends views_plugin_style {
                   '#collapsed' => TRUE,
                 );
               }
+              // Prepare form element.
               if (isset($this->options['item'][$namespace][$module][$element_name])) {
                 $default_value = $this->options['item'][$namespace][$module][$element_name];
               }
               else {
                 $default_value = NULL;
               }
-              $form['item'][$namespace][$module][$element_name] = array(
+              $form_item = array(
                 '#type' => 'select',
                 '#title' => filter_xss(isset($definition['title']) ? $definition['title'] : $element_name),
                 '#description' => filter_xss(isset($definition['description']) ? $definition['description'] : NULL),
@@ -187,7 +213,28 @@ class views_rss_plugin_style_fields extends views_plugin_style {
               );
               // Add help link if provided.
               if (isset($definition['help']) && $definition['help']) {
-                $form['item'][$namespace][$module][$element_name]['#description'] .= ' ' . l('[?]', $definition['help'], array('attributes' => array('title' => t('Need more information?'))));
+                $form_item['#description'] .= ' ' . l('[?]', $definition['help'], array('attributes' => array('title' => t('Need more information?'))));
+              }
+              // Check if element should be displayed in a subgroup.
+              if (isset($definition['group']) && $definition['group']) {
+                // Add a subgroup to the form if it not yet added.
+                if (!isset($form['item'][$namespace][$module][$definition['group']])) {
+                  // Does module provide the group definition?
+                  $group_title = !empty($element_groups[$module][$definition['group']]['title']) ? $element_groups[$module][$definition['group']]['title'] : $definition['group'];
+                  $group_description = !empty($element_groups[$module][$definition['group']]['description']) ? $element_groups[$module][$definition['group']]['description'] : NULL;
+                  $form['item'][$namespace][$module][$definition['group']] = array(
+                    '#type' => 'fieldset',
+                    '#title' => filter_xss($group_title),
+                    '#description' => filter_xss($group_description),
+                    '#collapsible' => TRUE,
+                    '#collapsed' => TRUE,
+                  );
+                }
+                $form['item'][$namespace][$module][$definition['group']][$element_name] = $form_item;
+              }
+              // Display element normally (not within a subgroup).
+              else {
+                $form['item'][$namespace][$module][$element_name] = $form_item;
               }
             }
           }
@@ -196,7 +243,7 @@ class views_rss_plugin_style_fields extends views_plugin_style {
 
       // Undefined namespaces derived from <channel> and/or <item>
       // elements defined by extension modules.
-      $namespaces = views_rss_get_namespaces();
+      $namespaces = views_rss_get('namespaces');
       if (count($namespaces)) {
         foreach ($namespaces as $module => $module_namespaces) {
           foreach ($module_namespaces as $namespace => $definition) {
@@ -286,7 +333,7 @@ class views_rss_plugin_style_fields extends views_plugin_style {
     }
     // Rewrite view rows to XML item rows.
     $items = array();
-    $item_elements = views_rss_get_item_elements();
+    $item_elements = views_rss_get('item_elements');
     foreach ($rendered as $id => $row) {
       $item = array();
       foreach ($item_elements as $module => $module_item_elements) {

@@ -13,7 +13,7 @@ function template_preprocess_views_view_views_rss(&$vars) {
 
   // Prepare <channel> elements.
   $vars['channel'] = '';
-  foreach (views_rss_get_channel_elements() as $module => $module_channel_elements) {
+  foreach (views_rss_get('channel_elements') as $module => $module_channel_elements) {
     foreach ($module_channel_elements as $element => $definition) {
       list($namespace, $element_name) = views_rss_extract_element_names($element, 'core');
       if (isset($view->style_plugin->options['channel'][$namespace][$module][$element_name])) {
@@ -70,7 +70,7 @@ function template_preprocess_views_view_views_rss(&$vars) {
   // Prepare <item> elements.
   $elements = array();
   $rows = '';
-  $item_elements = views_rss_get_item_elements();
+  $item_elements = views_rss_get('item_elements');
   $items = $view->style_plugin->map_rows($vars['rows']);
   foreach ($items as $item) {
     $row = '';
@@ -134,7 +134,7 @@ function template_preprocess_views_view_views_rss(&$vars) {
 
   // Prepare namespaces.
   $namespaces = array();
-  foreach (views_rss_get_namespaces() as $module => $module_namespaces) {
+  foreach (views_rss_get('namespaces') as $module => $module_namespaces) {
     foreach ($module_namespaces as $namespace => $definition) {
       // Check if definition provided through modules hooks
       // should be overwritten by module configuration.
