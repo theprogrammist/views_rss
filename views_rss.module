@@ -62,8 +62,9 @@ function views_rss_get($key, $rebuild = FALSE) {
       // Add namespaces not defined by any hook_views_rss_namespaces(),
       // but used in any of defined <channel> or <item> elements.
       // Let's also add "xmlns" prefix by default to such namespaces.
-      if ($key == 'namespaces') {
-        $data[$key] = _views_rss_get_undefined_namespaces($data[$key]);
+      $function = '_views_rss_process_' . $key;
+      if (function_exists($function)) {
+        $data[$key] = $function($data[$key]);
       }
       // Allow other modules to alter obtained item elements.
       drupal_alter($hook_name, $data[$key]);
@@ -79,7 +80,7 @@ function views_rss_get($key, $rebuild = FALSE) {
  * but used in any of defined <channel> or <item> elements.
  * Let's also add "xmlns" prefix by default to such namespaces.
  */
-function _views_rss_get_undefined_namespaces($namespaces) {
+function _views_rss_process_namespaces($namespaces) {
   foreach (views_rss_get('channel_elements') as $module => $elements) {
     foreach (array_keys($elements) as $element) {
       list($namespace, $element_name) = views_rss_extract_element_names($element);
@@ -97,6 +98,22 @@ function _views_rss_get_undefined_namespaces($namespaces) {
     }
   }
   return $namespaces;
+}
+
+/**
+ * Add table aliases for additional fields used for altering view query.
+ */
+function _views_rss_process_date_sources($date_sources) {
+  foreach ($date_sources as $module => $module_date_sources) {
+    foreach ($module_date_sources as $base_table => $elements) {
+      foreach ($elements as $element_name => $definition) {
+        if (!isset($definition['alias'])) {
+          $date_sources[$module][$base_table][$element_name]['alias'] = $element_name;
+        }
+      }
+    }
+  }
+  return $date_sources;
 }
 
 /**
