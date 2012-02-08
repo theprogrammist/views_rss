@@ -8,6 +8,16 @@
 define('VIEWS_RSS_PATH', drupal_get_path('module', 'views_rss'));
 
 /**
+ * In theory, theme.inc should be automatically loaded from hook_views_plugins()
+ * implementation in views_rss.views.inc - which usually is the case, apart from
+ * when "Rescan template files" in view configuration is used, when new template
+ * files are being detected, but theme.inc for some reason is not loaded, so
+ * template_preprocess_views_view_views_rss() is not available, and we're getting
+ * "Array" instead of proper feed data as a result.
+ */
+include_once VIEWS_RSS_PATH . '/theme/theme.inc';
+
+/**
  * Implements hook_views_api().
  */
 function views_rss_views_api() {
