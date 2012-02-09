@@ -156,7 +156,7 @@ function views_rss_rewrite_relative_paths($element) {
     // Replace image paths.
     $pattern = "/<img([^>]*) src=\"[^http|ftp|https]([^\"]*)\"/";
     $replacement = "<img\${1} src=\"" . $baseurl . "\${2}\"";
-    $element['value'] = preg_replace($pattern, $replace, $element['value']);
+    $element['value'] = preg_replace($pattern, $replacement, $element['value']);
   }
   return $element['value'];
 }
