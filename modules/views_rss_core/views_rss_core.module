@@ -10,6 +10,17 @@ define('VIEWS_RSS_CORE_PATH', drupal_get_path('module', 'views_rss_core'));
 include_once VIEWS_RSS_CORE_PATH .'/views_rss_core.preprocess.inc';
 
 /**
+ * Implementation of hook_views_rss_namespaces().
+ */
+function views_rss_core_views_rss_namespaces() {
+  $namespaces['base'] = array(
+    'prefix' => 'xml',
+    'uri' => trim($GLOBALS['base_url'], '/') . '/',
+  );
+  return $namespaces;
+}
+
+/**
  * Implements hook_views_rss_channel_elements().
  */
 function views_rss_core_views_rss_channel_elements() {
