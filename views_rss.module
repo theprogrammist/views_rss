@@ -62,6 +62,7 @@ function views_rss_get($key, $rebuild = FALSE) {
     else {
       // Fetch item elements provided by other modules. We need to manually call
       // each module so that we can know which module a given item came from.
+      $data[$key] = array();
       $hook_name = 'views_rss_' . $key;
       foreach (module_implements($hook_name) as $module) {
         $module_data = call_user_func($module . '_' . $hook_name);
