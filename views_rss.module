@@ -135,3 +135,28 @@ function views_rss_extract_element_names($element, $core_namespace = '') {
   }
   return explode(':', $element);
 }
+
+/**
+ * Replaces relative paths in element value with absolute URLs.
+ * Based on the code by Gerd Riesselmann from "RSS doesn't know a base-URL":
+ * http://www.gerd-riesselmann.net/archives/2005/11/rss-doesnt-know-a-base-url
+ */
+function views_rss_rewrite_relative_paths($element) {
+  // Rewriting relative paths should be enabled by default,
+  // so rewrite relative paths even if option value is not set.
+  if (
+    !isset($element['view']->style_plugin->options['feed_settings']['absolute_paths'])
+    || !empty($element['view']->style_plugin->options['feed_settings']['absolute_paths'])
+  ) {
+    $baseurl = trim($GLOBALS['base_url'], '/') . '/';
+    // Replace link paths.
+    $pattern = "/<a([^>]*) href=\"[^http|ftp|https]([^\"]*)\"/";
+    $replacement = "<a\${1} href=\"" . $baseurl . "\${2}\"";
+    $element['value'] = preg_replace($pattern, $replacement, $element['value']);
+    // Replace image paths.
+    $pattern = "/<img([^>]*) src=\"[^http|ftp|https]([^\"]*)\"/";
+    $replacement = "<img\${1} src=\"" . $baseurl . "\${2}\"";
+    $element['value'] = preg_replace($pattern, $replace, $element['value']);
+  }
+  return $element['value'];
+}

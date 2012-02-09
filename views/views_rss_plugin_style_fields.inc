@@ -281,10 +281,13 @@ class views_rss_plugin_style_fields extends views_plugin_style {
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
       );
-      $form['feed_settings']['feed_in_links'] = array(
+      $form['feed_settings']['absolute_paths'] = array(
         '#type' => 'checkbox',
-        '#title' => t('Display feed icon in the links attached to the view'),
-        '#default_value' => !empty($this->options['feed_settings']['feed_in_links']),
+        '#title' => t("Replace relative paths with absolute URLs"),
+        '#description' => t('Enabling this option will replace all relative paths (like <em>/node/1</em>) with absolute URLs (<em>!absolute_url</em>) in all feed elements configured to use this feature (for example &lt;description&gt; element).', array(
+          '!absolute_url' => trim($GLOBALS['base_url'], '/') . '/node/1',
+        )),
+        '#default_value' => !empty($this->options['feed_settings']['absolute_paths']) || !isset($this->options['feed_settings']['absolute_paths']),
         '#weight' => 1,
       );
       $form['feed_settings']['exposed_in_source'] = array(
@@ -293,6 +296,12 @@ class views_rss_plugin_style_fields extends views_plugin_style {
         '#description' => t('By default &lt;source&gt; element of each feed &lt;item&gt; will point to main feed URL (including arguments if provided). Enabling this option will add also all exposed filter values to the feed URL in &lt;source&gt; element.'),
         '#default_value' => !empty($this->options['feed_settings']['exposed_in_source']),
         '#weight' => 2,
+      );
+      $form['feed_settings']['feed_in_links'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Display feed icon in the links attached to the view'),
+        '#default_value' => !empty($this->options['feed_settings']['feed_in_links']),
+        '#weight' => 3,
       );
 
     }
