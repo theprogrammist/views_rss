@@ -69,7 +69,7 @@ function views_rss_core_preprocess_item_guid($vars) {
         'isPermaLink' => 'false',
       ),
     );
-    if ((!isset($vars['item']['link']) || empty($vars['item']['link'])) && valid_url($value['value'], TRUE)) {
+    if ((!isset($vars['item']['views_rss_core']['link']) || empty($vars['item']['views_rss_core']['link'])) && valid_url($value['value'], TRUE)) {
       $value['arguments']['isPermaLink'] = 'true';
     }
     return $value;
