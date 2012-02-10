@@ -250,12 +250,12 @@ function views_rss_core_field_formatter_info() {
   $formatters = array(
     // Generic image formatter for <enclosure> element.
     'enclosure_image' => array(
-      'label' => t('RSS enclosure element: image'),
+      'label' => t('RSS <enclosure> element'),
       'field types' => array('image'),
     ),
     // Generic file formatter for <enclosure> element.
     'enclosure_file' => array(
-      'label' => t('RSS enclosure element: file'),
+      'label' => t('RSS <enclosure> element'),
       'field types' => array('file'),
     ),
   );

@@ -57,7 +57,7 @@ function theme_views_rss_core_formatter_enclosure($variables) {
     return;
   }
   // Get full image URL based on provided image style.
-  if ($variables['field']['type'] == 'image' && $variables['image_style']) {
+  if ($variables['field']['type'] == 'image' && !empty($variables['image_style'])) {
     $path = image_style_url($variables['image_style'], $variables['item']['uri']);
   }
   else {
