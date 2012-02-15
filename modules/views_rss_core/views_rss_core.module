@@ -266,6 +266,7 @@ function views_rss_core_field_formatter_info() {
 function views_rss_core_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
   $display = $instance['display'][$view_mode];
   $settings = $display['settings'];
+  $element = NULL;
 
   if ($field['type'] == 'image') {
     $image_styles = image_style_options(FALSE);
@@ -324,7 +325,7 @@ function views_rss_code_field_formatter_settings_summary($field, $instance, $vie
  * Any better ideas?
  */
 function views_rss_core_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
-  $element = array();
+  $element = NULL;
   foreach ($items as $delta => $item) {
     // Inside a view item may contain NULL data. In that case, just return.
     if (empty($item['fid'])) {
