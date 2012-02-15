@@ -20,7 +20,7 @@ class views_rss_handler_field_user_mail extends views_handler_field_user_mail {
       '#type' => 'select',
       '#options' => array(
         'default' => t('Generic email'),
-        'with_name' => t('RSS email: with user name'),
+        'with_name' => t('RSS <author> element (with user name)'),
       ),
       '#default_value' => isset($this->options['rss_format']) ? $this->options['rss_format'] : 'default',
     );

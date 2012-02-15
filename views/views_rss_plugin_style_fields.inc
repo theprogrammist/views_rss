@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Extend the view_plugin_style class to provide an RSS view style.
+ * Extends the view_plugin_style class to provide new RSS view style.
  */
 
 class views_rss_plugin_style_fields extends views_plugin_style {
@@ -92,7 +92,7 @@ class views_rss_plugin_style_fields extends views_plugin_style {
 
     $handlers = $this->display->handler->get_handlers('field');
     if (empty($handlers)) {
-      drupal_set_message(t('You need at least one field before you can configure your field settings.'), 'warning');
+      drupal_set_message(t('You need at least one field before you can configure your field settings.'), 'error');
     }
     else {
 
@@ -131,28 +131,33 @@ class views_rss_plugin_style_fields extends views_plugin_style {
                 );
               }
               // Prepare form element.
-              if (isset($this->options['channel'][$namespace][$module][$element_name])) {
+              $default_value = NULL;
+              if (!empty($this->options['channel'][$namespace][$module][$element_name])) {
                 $default_value = $this->options['channel'][$namespace][$module][$element_name];
               }
-              elseif (isset($definition['default_value'])) {
-                $default_value = $definition['default_value'];
-              }
-              else {
-                $default_value = NULL;
-              }
               $form_item = array(
-                '#type' => isset($definition['type']) ? $definition['type'] : 'textfield',
+                '#type' => 'textfield',
                 '#title' => filter_xss(isset($definition['title']) ? $definition['title'] : $element_name),
                 '#description' => filter_xss(isset($definition['description']) ? $definition['description'] : NULL),
                 '#default_value' => $default_value,
-                '#required' => isset($definition['required']) ? $definition['required'] : FALSE,
               );
+              if (!empty($definition['settings form'])) {
+                $form_item = array_merge($form_item, $definition['settings form']);
+                // Make sure that #options is an associative array.
+                if (!empty($definition['settings form']['#options'])) {
+                  $form_item['#options'] = views_rss_map_assoc($definition['settings form']['#options']);
+                }
+              }
+              if (!empty($definition['settings form options callback'])) {
+                $function = $definition['settings form options callback'];
+                $form_item['#options'] = views_rss_map_assoc($function());
+              }
               // Add help link if provided.
-              if (isset($definition['help']) && $definition['help']) {
+              if (!empty($definition['help'])) {
                 $form_item['#description'] .= ' ' . l('[?]', $definition['help'], array('attributes' => array('title' => t('Need more information?'))));
               }
               // Check if element should be displayed in a subgroup.
-              if (isset($definition['group']) && $definition['group']) {
+              if (!empty($definition['group'])) {
                 // Add a subgroup to the form if it not yet added.
                 if (!isset($form['channel'][$namespace][$module][$definition['group']])) {
                   // Does module provide the group definition?
@@ -198,11 +203,9 @@ class views_rss_plugin_style_fields extends views_plugin_style {
                 );
               }
               // Prepare form element.
-              if (isset($this->options['item'][$namespace][$module][$element_name])) {
+              $default_value = NULL;
+              if (!empty($this->options['item'][$namespace][$module][$element_name])) {
                 $default_value = $this->options['item'][$namespace][$module][$element_name];
-              }
-              else {
-                $default_value = NULL;
               }
               $form_item = array(
                 '#type' => 'select',
@@ -211,6 +214,11 @@ class views_rss_plugin_style_fields extends views_plugin_style {
                 '#options' => $field_names,
                 '#default_value' => $default_value,
               );
+              if (!empty($definition['settings form'])) {
+                // Merge only those values from $definition['settings_form']
+                // for which keys are not already defined in $form_item.
+                $form_item = array_merge($form_item, array_diff_key($definition['settings form'], $form_item));
+              }
               // Add help link if provided.
               if (isset($definition['help']) && $definition['help']) {
                 $form_item['#description'] .= ' ' . l('[?]', $definition['help'], array('attributes' => array('title' => t('Need more information?'))));
@@ -326,6 +334,22 @@ class views_rss_plugin_style_fields extends views_plugin_style {
       $function = $module . '_views_rss_options_form_submit';
       $function($form, $form_state);
     }
+  }
+
+  /**
+   * Make sure the display and all associated handlers are valid.
+   */
+  function validate() {
+    parent::validate();
+    $errors = array();
+    $channel_elements = views_rss_get('channel_elements');
+    $item_elements = views_rss_get('item_elements');
+    if (empty($channel_elements) && empty($item_elements)) {
+      $errors[] = t('You have not enabled any modules providing feed elements. Please enable at least <a href="@modules_url">Views RSS: Core Elements</a> module.', array(
+        '@modules_url' => url('admin/modules', array('fragment' => 'edit-modules-views')),
+      ));
+    }
+    return $errors;
   }
 
   /**

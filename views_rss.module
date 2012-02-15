@@ -5,6 +5,14 @@
  * Module providing fields-based views style plugin for RSS feed generation.
  */
 
+/**
+ * Module build version.
+ */
+define('VIEWS_RSS_BUILD', '7.x-2.x-dev-20120215');
+
+/**
+ * Module installation path.
+ */
 define('VIEWS_RSS_PATH', drupal_get_path('module', 'views_rss'));
 
 /**
@@ -33,15 +41,25 @@ function views_rss_views_api() {
 function views_rss_theme() {
   return array(
     'views_view_views_rss_fields' => array(
-      'variables' => array('row' => NULL, 'view' => NULL),
-      'file' => 'theme.inc',
       'template' => 'views-view-views-rss-fields',
-      'path' => VIEWS_RSS_PATH . '/theme',
-    ),
-    'views_rss_element' => array(
-      'variables' => array('vars' => NULL),
       'file' => 'theme.inc',
       'path' => VIEWS_RSS_PATH . '/theme',
+      'variables' => array(
+        'row' => NULL,
+        'view' => NULL,
+      ),
+    ),
+    'views_view_views_rss_field' => array(
+      'template' => 'views-view-views-rss-field',
+      'file' => 'theme.inc',
+      'path' => VIEWS_RSS_PATH . '/theme',
+      'variables' => array(
+        'elements' => NULL,
+        'element' => NULL,
+        'arguments' => NULL,
+        'value' => NULL,
+        'subelements' => NULL,
+      ),
     ),
   );
 }
@@ -160,4 +178,24 @@ function views_rss_rewrite_relative_paths($element) {
     $element['value'] = preg_replace($pattern, $replacement, $element['value']);
   }
   return $element['value'];
+}
+
+/**
+ * Forms associative array from linear array,
+ * or returns original array if already associative.
+ */
+function views_rss_map_assoc($array) {
+  if (!(array_keys($array) !== range(0, count($array) - 1))) {
+    $array = drupal_map_assoc($array);
+  }
+  return $array;
+}
+
+/**
+ * Converts XML special characters to HTML entities.
+ */
+function views_rss_htmlspecialchars(&$variables) {
+  if (isset($variables['value']) && !is_array($variables['value'])) {
+    $variables['value'] = htmlspecialchars(htmlspecialchars_decode($variables['value'], ENT_QUOTES), ENT_QUOTES, NULL, FALSE);
+  }
 }
