@@ -141,6 +141,7 @@ class views_rss_plugin_style_fields extends views_plugin_style {
                 '#description' => filter_xss(isset($definition['description']) ? $definition['description'] : NULL),
                 '#default_value' => $default_value,
               );
+              // Allow to overwrite default form element.
               if (!empty($definition['settings form'])) {
                 $form_item = array_merge($form_item, $definition['settings form']);
                 // Make sure that #options is an associative array.
@@ -214,10 +215,13 @@ class views_rss_plugin_style_fields extends views_plugin_style {
                 '#options' => $field_names,
                 '#default_value' => $default_value,
               );
+              // Allow to overwrite default form element.
               if (!empty($definition['settings form'])) {
-                // Merge only those values from $definition['settings_form']
-                // for which keys are not already defined in $form_item.
-                $form_item = array_merge($form_item, array_diff_key($definition['settings form'], $form_item));
+                $form_item = array_merge($form_item, $definition['settings form']);
+                // Make sure that #options is an associative array.
+                if (!empty($definition['settings form']['#options'])) {
+                  $form_item['#options'] = views_rss_map_assoc($definition['settings form']['#options']);
+                }
               }
               // Add help link if provided.
               if (isset($definition['help']) && $definition['help']) {
