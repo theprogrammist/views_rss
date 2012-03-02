@@ -23,6 +23,10 @@ function views_rss_core_views_rss_namespaces() {
     'prefix' => 'xml',
     'uri' => trim($GLOBALS['base_url'], '/') . '/',
   );
+  $namespaces['atom'] = array(
+    'prefix' => 'xmlns',
+    'uri' => 'http://www.w3.org/2005/Atom',
+  );
   return $namespaces;
 }
 
@@ -48,6 +52,11 @@ function views_rss_core_views_rss_channel_elements() {
     'configurable' => FALSE,
     'preprocess functions' => array('views_rss_core_preprocess_channel_link'),
     'help' => 'http://www.rssboard.org/rss-profile#element-channel-link',
+  );
+  $elements['atom:link'] = array(
+    'configurable' => FALSE,
+    'preprocess functions' => array('views_rss_core_preprocess_channel_atom_link'),
+    'help' => 'http://www.rssboard.org/rss-profile#namespace-elements-atom-link',
   );
   $elements['language'] = array(
     'description' => t('The language the channel is written in. This allows aggregators to group all Italian language sites, for example, on a single page. See list of <a href="@w3c_url">allowable values</a> for this element defined by the W3C.', array(

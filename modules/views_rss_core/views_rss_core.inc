@@ -28,6 +28,18 @@ function views_rss_core_preprocess_channel_link(&$variables) {
 }
 
 /**
+ * Preprocess function for channel <atom:link> element.
+ */
+function views_rss_core_preprocess_channel_atom_link(&$variables) {
+  $variables['value'] = array(
+    'arguments' => array(
+      'rel' => 'self',
+      'href' => trim($GLOBALS['base_url'], '/') . '/' . $variables['view']->get_url(),
+    ),
+  );
+}
+
+/**
  * Preprocess function for channel <image> element.
  */
 function views_rss_core_preprocess_channel_image(&$variables) {
