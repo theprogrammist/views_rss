@@ -365,6 +365,8 @@ function views_rss_core_field_formatter_view($entity_type, $entity, $field, $ins
  * Implements hook_views_rss_options_form_validate().
  */
 function views_rss_core_views_rss_options_form_validate($form, &$form_state) {
+
+  // Validate channel <image> element.
   if (!empty($form_state['values']['style_options']['channel']['core']['views_rss_core']['image'])) {
     // Check that image exists and is in acceptable format.
     $image = image_load($form_state['values']['style_options']['channel']['core']['views_rss_core']['image']);
@@ -388,6 +390,13 @@ function views_rss_core_views_rss_options_form_validate($form, &$form_state) {
           '!height' => $image->info['height'],
         )));
       }
+    }
+  }
+
+  // Validate channel <docs> element.
+  if (!empty($form_state['values']['style_options']['channel']['core']['views_rss_core']['docs'])) {
+    if (!valid_url($form_state['values']['style_options']['channel']['core']['views_rss_core']['docs'], TRUE)) {
+      form_set_error('style_options][channel][core][views_rss_core][docs', t("Not a valid URL."));
     }
   }
 }
