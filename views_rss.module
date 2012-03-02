@@ -8,7 +8,7 @@
 /**
  * Module build version.
  */
-define('VIEWS_RSS_BUILD', '7.x-2.x-dev-20120215_2');
+define('VIEWS_RSS_BUILD', '7.x-2.x-dev-20120302');
 
 /**
  * Module installation path.
