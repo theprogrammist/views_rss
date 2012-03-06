@@ -24,17 +24,24 @@ function views_rss_core_preprocess_channel_description(&$variables) {
  * Preprocess function for channel <link> element.
  */
 function views_rss_core_preprocess_channel_link(&$variables) {
-  $variables['value'] = trim($GLOBALS['base_url'], '/') . '/';
+  $variables['value'] = url('<front>', array('absolute' => TRUE));
 }
 
 /**
  * Preprocess function for channel <atom:link> element.
  */
 function views_rss_core_preprocess_channel_atom_link(&$variables) {
+  $url_options = array('absolute' => TRUE);
+  $input = $variables['view']->get_exposed_input();
+  if ($input) {
+    $url_options['query'] = $input;
+  }
+  $url = url($variables['view']->get_url(), $url_options);
+
   $variables['value'] = array(
     'arguments' => array(
       'rel' => 'self',
-      'href' => trim($GLOBALS['base_url'], '/') . '/' . $variables['view']->get_url(),
+      'href' => $url,
     ),
   );
 }
@@ -192,16 +199,17 @@ function views_rss_core_preprocess_item_guid(&$variables) {
  * Preprocess function for channel <source> element.
  */
 function views_rss_core_preprocess_item_source(&$variables) {
-  $value = array(
+  $url_options = array('absolute' => TRUE);
+  $input = $variables['view']->get_exposed_input();
+  if ($input) {
+    $url_options['query'] = $input;
+  }
+  $url = url($variables['view']->get_url(), $url_options);
+
+  $variables['value'] = array(
     'value' => $variables['view']->get_title(),
     'arguments' => array(
-      'url' => trim($GLOBALS['base_url'], '/') . '/' . $variables['view']->get_url(),
+      'url' => $url,
     ),
   );
-  // Add exposed filter values if enabled.
-  $exposed_input = $variables['view']->get_exposed_input();
-  if ($variables['view']->style_plugin->options['feed_settings']['exposed_in_source'] && $exposed_input) {
-    $value['arguments']['url'] .= '?' . http_build_query($exposed_input, '', '&');
-  }
-  $variables['value'] = $value;
 }
