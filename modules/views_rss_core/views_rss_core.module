@@ -47,8 +47,8 @@ function views_rss_core_views_rss_channel_elements() {
     'settings form' => array('#type' => 'textarea', '#rows' => 3),
     'preprocess functions' => array(
       'views_rss_core_preprocess_channel_description',
-      'views_rss_htmlspecialchars',
       'views_rss_rewrite_relative_paths',
+      'views_rss_htmlspecialchars',
     ),
     'help' => 'http://www.rssboard.org/rss-profile#element-channel-description',
   );
@@ -153,8 +153,8 @@ function views_rss_core_views_rss_item_elements() {
   $elements['description'] = array(
     'description' => t('The item synopsis. Required by RSS specification.'),
     'preprocess functions' => array(
-      'views_rss_htmlspecialchars',
       'views_rss_rewrite_relative_paths',
+      'views_rss_htmlspecialchars',
     ),
     'help' => 'http://www.rssboard.org/rss-profile#element-channel-item-description',
   );

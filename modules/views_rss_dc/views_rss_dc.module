@@ -37,8 +37,8 @@ function views_rss_dc_views_rss_item_elements() {
   $elements['dc:description'] = array(
     'description' => t('An account of the content of the resource. Description may include but is not limited to: an abstract, table of contents, reference to a graphical representation of content or a free-text account of the content.'),
     'preprocess functions' => array(
-      'views_rss_htmlspecialchars',
       'views_rss_rewrite_relative_paths',
+      'views_rss_htmlspecialchars',
     ),
     'help' => 'http://dublincore.org/documents/1999/07/02/dces/#description',
   );
