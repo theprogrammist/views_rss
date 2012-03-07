@@ -194,8 +194,8 @@ function views_rss_map_assoc($array) {
 /**
  * Converts XML special characters to HTML entities.
  */
-function views_rss_htmlspecialchars(&$variables) {
-  if (isset($variables['value']) && !is_array($variables['value'])) {
-    $variables['value'] = htmlspecialchars(htmlspecialchars_decode($variables['value'], ENT_QUOTES), ENT_QUOTES, NULL, FALSE);
+function views_rss_htmlspecialchars(&$element) {
+  if (isset($element['value']) && !is_array($element['value'])) {
+    $element['value'] = check_plain(htmlspecialchars_decode($element['value'], ENT_QUOTES));
   }
 }
