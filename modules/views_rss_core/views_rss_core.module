@@ -302,7 +302,7 @@ function views_rss_core_field_formatter_settings_form($field, $instance, $view_m
 /**
  * Implements hook_field_formatter_settings_summary().
  */
-function views_rss_code_field_formatter_settings_summary($field, $instance, $view_mode) {
+function views_rss_core_field_formatter_settings_summary($field, $instance, $view_mode) {
   $display = $instance['display'][$view_mode];
   $settings = $display['settings'];
 
