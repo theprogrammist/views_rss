@@ -353,19 +353,25 @@ class views_rss_plugin_style_fields extends views_plugin_style {
    */
   function map_rows($rows) {
     // Fields must be pre-rendered starting from version 2.3 of Views module.
-    $rendered = array();
+    $rendered = $raw = array();
     $keys = array_keys($this->view->field);
     foreach ($rows as $count => $row) {
       $this->view->row_index = $count;
       foreach ($keys as $id) {
         $rendered[$count][$id] = $this->view->field[$id]->theme($row);
+        // Also let's keep raw value for further processing.
+        $field_name = 'field_' . $id;
+        if (!empty($row->$field_name)) {
+          $raw[$count][$id] = $row->$field_name;
+        }
       }
     }
+
     // Rewrite view rows to XML item rows.
-    $items = array();
+    $items = $raw_items = array();
     $item_elements = views_rss_get('item_elements');
     foreach ($rendered as $id => $row) {
-      $item = array();
+      $item = $raw_item = array();
       foreach ($item_elements as $module => $module_item_elements) {
         foreach (array_keys($module_item_elements) as $element) {
           list($namespace, $element_name) = views_rss_extract_element_names($element, 'core');
@@ -382,10 +388,21 @@ class views_rss_plugin_style_fields extends views_plugin_style {
           else {
             $item[$module][$element] = NULL;
           }
+          // Keep raw values too.
+          if (
+            !empty($this->options['item'][$namespace][$module][$element_name])
+            && !empty($raw[$id][$this->options['item'][$namespace][$module][$element_name]])
+          ) {
+            $raw_item[$module][$element] = $raw[$id][$this->options['item'][$namespace][$module][$element_name]];
+          }
+
         }
       }
-      $items[] = $item;
+      $items[$id] = $item;
+      $raw_items[$id] = $raw_item;
     }
+
+    $this->view->raw_items = $raw_items;
     return $items;
   }
 

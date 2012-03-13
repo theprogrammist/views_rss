@@ -77,16 +77,23 @@ function template_preprocess_views_view_views_rss(&$variables) {
   $rows = '';
   $item_elements = views_rss_get('item_elements');
   $items = $view->style_plugin->map_rows($variables['rows']);
-  foreach ($items as $item) {
+  foreach ($items as $item_key => $item) {
     $row = '';
     // Preprocess whole item array before processing and theming separate elements.
     foreach (module_implements('views_rss_preprocess_item') as $module) {
-      $function = $module .'_views_rss_preprocess_item';
-      $item = $function(array(
+      $preprocess_function = $module . '_views_rss_preprocess_item';
+      $item_variables = array(
         'item' => $item,
         'view' => $view,
-      ));
+      );
+      // Add raw row if generated based on raw item values provided by field formatter.
+      if (!empty($view->raw_items[$item_key])) {
+        $item_variables['raw'] = $view->raw_items[$item_key];
+      }
+      $preprocess_function($item_variables);
+      $item = $item_variables['item'];
     }
+    // Process each element separately.
     foreach ($item as $module => $module_item_elements) {
       foreach ($module_item_elements as $element => $value) {
         // Preprocess element initial value if required.
@@ -99,6 +106,10 @@ function template_preprocess_views_view_views_rss(&$variables) {
                 'item' => $item,
                 'view' => $view,
               );
+              // Add raw item if provided by field formatter.
+              if (!empty($view->raw_items[$item_key][$module][$element])) {
+                $item_variables['raw'] = $view->raw_items[$item_key][$module][$element];
+              }
               $preprocess_function($item_variables);
               $value = $item_variables['value'];
             }
