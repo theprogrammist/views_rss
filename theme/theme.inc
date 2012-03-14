@@ -111,6 +111,9 @@ function template_preprocess_views_view_views_rss(&$variables) {
                 $item_variables['raw'] = $view->raw_items[$item_key][$module][$element];
               }
               $preprocess_function($item_variables);
+              // $element and $item values could have been updated in
+              // the preprocess function, so let's re-assing them back.
+              $element = $item_variables['element'];
               $value = $item_variables['value'];
             }
           }
