@@ -10,7 +10,7 @@
  */
 function views_rss_core_preprocess_channel_title(&$variables) {
   $view_title = $variables['view']->get_title();
-  $variables['value'] = ($view_title) ? $view_title : variable_get('sitename', t('Drupal'));
+  $variables['value'] = ($view_title) ? $view_title : variable_get('site_name', t('Drupal'));
 }
 
 /**
