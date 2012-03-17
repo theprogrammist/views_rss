@@ -196,7 +196,7 @@ function views_rss_core_preprocess_item_guid(&$variables) {
 }
 
 /**
- * Preprocess function for channel <source> element.
+ * Preprocess function for item <source> element.
  */
 function views_rss_core_preprocess_item_source(&$variables) {
   $url_options = array('absolute' => TRUE);
@@ -206,8 +206,9 @@ function views_rss_core_preprocess_item_source(&$variables) {
   }
   $url = url($variables['view']->get_url(), $url_options);
 
+  $view_title = $variables['view']->get_title();
   $variables['value'] = array(
-    'value' => $variables['view']->get_title(),
+    'value' => ($view_title) ? $view_title : variable_get('site_name', t('Drupal')),
     'arguments' => array(
       'url' => $url,
     ),
