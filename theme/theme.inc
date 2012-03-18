@@ -151,7 +151,7 @@ function template_preprocess_views_view_views_rss(&$variables) {
   $variables['rows'] = $rows;
 
   // Prepare namespaces.
-  $namespaces = array();
+  $namespaces = array('base' => 'xml:base="' . url('<front>', array('absolute' => TRUE)) . '"');
   foreach (views_rss_get('namespaces') as $module => $module_namespaces) {
     foreach ($module_namespaces as $namespace => $definition) {
       // Check if definition provided through modules hooks
