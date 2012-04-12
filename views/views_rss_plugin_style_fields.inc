@@ -347,7 +347,7 @@ class views_rss_plugin_style_fields extends views_plugin_style {
     }
     return $errors;
   }
-
+  
   /**
    * Map views row result to an RSS item.
    */
@@ -402,7 +402,7 @@ class views_rss_plugin_style_fields extends views_plugin_style {
       $raw_items[$id] = $raw_item;
     }
 
-    $this->view->raw_items = $raw_items;
+    $this->view->views_rss['raw_items'] = $raw_items;
     return $items;
   }
 

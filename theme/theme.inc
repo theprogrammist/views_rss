@@ -87,8 +87,8 @@ function template_preprocess_views_view_views_rss(&$variables) {
         'view' => $view,
       );
       // Add raw row if generated based on raw item values provided by field formatter.
-      if (!empty($view->raw_items[$item_key])) {
-        $item_variables['raw'] = $view->raw_items[$item_key];
+      if (!empty($view->views_rss['raw_items'][$item_key])) {
+        $item_variables['raw'] = $view->views_rss['raw_items'][$item_key];
       }
       $preprocess_function($item_variables);
       $item = $item_variables['item'];
@@ -107,8 +107,8 @@ function template_preprocess_views_view_views_rss(&$variables) {
                 'view' => $view,
               );
               // Add raw item if provided by field formatter.
-              if (!empty($view->raw_items[$item_key][$module][$element])) {
-                $item_variables['raw'] = $view->raw_items[$item_key][$module][$element];
+              if (!empty($view->views_rss['raw_items'][$item_key][$module][$element])) {
+                $item_variables['raw'] = $view->views_rss['raw_items'][$item_key][$module][$element];
               }
               $preprocess_function($item_variables);
               // $element and $item values could have been updated in
@@ -116,6 +116,23 @@ function template_preprocess_views_view_views_rss(&$variables) {
               $element = $item_variables['element'];
               $value = $item_variables['value'];
             }
+          }
+        }
+        // If no preprocess function was defined, and we have received
+        // #markup value (fully formatted feed element) from the formatter,
+        // it should be passed to field template to be displayed without
+        // any further modifications.
+        elseif (!empty($view->views_rss['raw_items'][$item_key][$module][$element]) && is_array($view->views_rss['raw_items'][$item_key][$module][$element])) {
+          $markups = array();
+          foreach ($view->views_rss['raw_items'][$item_key][$module][$element] as $raw_item) {
+            if (!empty($raw_item['rendered']['#markup'])) {
+              $markups[] = $raw_item['rendered']['#markup'];
+            }
+          }
+          if (!empty($markups)) {
+            $value = array(
+              'markup' => implode('', $markups),
+            );
           }
         }
         // If there is no value and no arguments (in case of self-closing elements)

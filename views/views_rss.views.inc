@@ -42,6 +42,9 @@ function views_rss_views_handlers() {
       'views_rss_handler_field_user_mail' => array(
         'parent' => 'views_handler_field_user_mail',
       ),
+      'views_rss_handler_field_term_node_tid' => array(
+        'parent' => 'views_handler_field_term_node_tid',
+      ),
     ),
   );
 }
@@ -51,4 +54,5 @@ function views_rss_views_handlers() {
  */
 function views_rss_views_data_alter(&$data) {
   $data['users']['mail']['field']['handler'] = 'views_rss_handler_field_user_mail';
+  $data['node']['term_node_tid']['field']['handler'] = 'views_rss_handler_field_term_node_tid';
 }

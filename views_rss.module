@@ -8,7 +8,7 @@
 /**
  * Module build version.
  */
-define('VIEWS_RSS_BUILD', '7.x-2.x-dev-20120317');
+define('VIEWS_RSS_BUILD', '7.x-2.x-dev-20120412');
 
 /**
  * Module installation path.
@@ -58,7 +58,10 @@ function views_rss_theme() {
         'element' => NULL,
         'arguments' => NULL,
         'value' => NULL,
+        'markup' => NULL,
         'subelements' => NULL,
+        'item' => NULL,
+        'view' => NULL,
       ),
     ),
   );

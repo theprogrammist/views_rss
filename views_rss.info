@@ -5,3 +5,4 @@ dependencies[] = views
 core = 7.x
 files[] = views/views_rss_plugin_style_fields.inc
 files[] = views/views_rss_handler_field_user_mail.inc
+files[] = views/views_rss_handler_field_term_node_tid.inc

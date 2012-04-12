@@ -11,6 +11,11 @@
 define('VIEWS_RSS_CORE_PATH', drupal_get_path('module', 'views_rss_core'));
 
 /**
+ * Include file with field formatters.
+ */
+include_once VIEWS_RSS_CORE_PATH .'/views_rss_core.field.inc';
+
+/**
  * Include file with all preprocess functions.
  */
 include_once VIEWS_RSS_CORE_PATH . '/views_rss_core.inc';
@@ -68,7 +73,7 @@ function views_rss_core_views_rss_channel_elements() {
     'description' => t('Specify one or more categories that the channel belongs to. Separate multiple items with comma.'),
     'preprocess functions' => array(
       'views_rss_htmlspecialchars',
-      'views_rss_core_preprocess_category',
+      'views_rss_core_preprocess_channel_category',
     ),
     'help' => 'http://www.rssboard.org/rss-profile#element-channel-category',
   );
@@ -160,10 +165,6 @@ function views_rss_core_views_rss_item_elements() {
   );
   $elements['category'] = array(
     'description' => t('Includes the item in one or more categories.'),
-    'preprocess functions' => array(
-      'views_rss_htmlspecialchars',
-      'views_rss_core_preprocess_category',
-    ),
     'help' => 'http://www.rssboard.org/rss-profile#element-channel-item-category',
   );
   $elements['comments'] = array(
@@ -255,149 +256,36 @@ function views_rss_core_views_query_alter(&$view, &$query) {
 }
 
 /**
- * Implements hook_field_formatter_info().
- */
-function views_rss_core_field_formatter_info() {
-  $formatters = array(
-    // Generic image formatter for <enclosure> element.
-    'enclosure_image' => array(
-      'label' => t('RSS <enclosure> element'),
-      'field types' => array('image'),
-    ),
-    // Generic file formatter for <enclosure> element.
-    'enclosure_file' => array(
-      'label' => t('RSS <enclosure> element'),
-      'field types' => array('file'),
-    ),
-  );
-  return $formatters;
-}
-
-/**
- * Implements hook_field_formatter_settings_form().
- */
-function views_rss_core_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
-  $display = $instance['display'][$view_mode];
-  $settings = $display['settings'];
-  $element = NULL;
-
-  if ($field['type'] == 'image') {
-    $image_styles = image_style_options(FALSE);
-    $element['image_style'] = array(
-      '#title' => t('Image style'),
-      '#type' => 'select',
-      '#default_value' => $settings['image_style'],
-      '#empty_option' => t('None (original image)'),
-      '#options' => $image_styles,
-    );
-  }
-
-  return $element;
-}
-
-/**
- * Implements hook_field_formatter_settings_summary().
- */
-function views_rss_core_field_formatter_settings_summary($field, $instance, $view_mode) {
-  $display = $instance['display'][$view_mode];
-  $settings = $display['settings'];
-
-  $summary = array();
-
-  if ($field['type'] == 'image') {
-    $image_styles = image_style_options(FALSE);
-    // Unset possible 'No defined styles' option.
-    unset($image_styles['']);
-    // Styles could be lost because of enabled/disabled modules that defines
-    // their styles in code.
-    if (isset($image_styles[$settings['image_style']])) {
-      $summary[] = t('Image style: @style', array('@style' => $image_styles[$settings['image_style']]));
-    }
-    else {
-      $summary[] = t('Original image');
-    }
-  }
-
-  return implode('<br />', $summary);
-}
-
-/**
- * Implements hook_field_formatter_view().
- *
- * This is a dirty trick here. Essentially, we do not want to call a theme
- * function from here, as it should be called from within a view (amongst
- * other to have $view object in $variables). Therefore here we want to
- * return value only, hence use of array('#markup' => $value). However,
- * in some cases it won't be just a simple string value to return,
- * sometimes we'd want to return an array (for example value with
- * additional arguments) - hence the need to serialize it (plus add
- * "serialized" string at the beginning so that our field preprocess
- * function template_preprocess_views_view_views_rss_field() is able
- * to recognize it as serialized array and treat accordingly.
- *
- * Any better ideas?
- */
-function views_rss_core_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
-  $element = NULL;
-  foreach ($items as $delta => $item) {
-    // Inside a view item may contain NULL data. In that case, just return.
-    if (empty($item['fid'])) {
-      unset($items[$delta]);
-      continue;
-    }
-    // Get full image URL based on provided image style.
-    if ($field['type'] == 'image' && !empty($display['settings']['image_style']) && $image_style = image_style_load($display['settings']['image_style'])) {
-      $uri = image_style_url($display['settings']['image_style'], $item['uri']);
-      // Get file size of image preset file (if it has already been created,
-      // otherwise just create it first and then get file size).
-      $path = image_style_path($display['settings']['image_style'], $item['uri']);
-      $real_path = drupal_realpath($path);
-      if (file_exists($real_path) || image_style_create_derivative($image_style, $item['uri'], $path)) {
-        $item['filesize'] = filesize($real_path);
-      }
-    }
-    else {
-      $uri = file_create_url($item['uri']);
-    }
-    $element[$delta] = array('#markup' => 'serialized:' . serialize(array(
-      'arguments' => array(
-        'url' => $uri,
-        'length' => $item['filesize'],
-        'type'   => $item['filemime'],
-      ),
-    )));
-  }
-  return $element;
-}
-
-/**
  * Implements hook_views_rss_options_form_validate().
  */
 function views_rss_core_views_rss_options_form_validate($form, &$form_state) {
 
   // Validate channel <image> element.
   if (!empty($form_state['values']['style_options']['channel']['core']['views_rss_core']['image'])) {
-    // Check that image exists and is in acceptable format.
-    $image = image_load($form_state['values']['style_options']['channel']['core']['views_rss_core']['image']);
-    if (empty($image)) {
-      form_set_error('style_options][channel][core][views_rss_core][image', t('Unable to find %image or incorrect image format.', array(
-        '%image' => $form_state['values']['style_options']['channel']['core']['views_rss_core']['image'],
-      )));
-    }
-    else {
-      // Check image width.
-      if ($image->info['width'] > 144) {
-        form_set_error('style_options][channel][core][views_rss_core][image', t("Maximum allowed width of an image for feed channel's &lt;image&gt; element is 144 pixels. Specified %image is !width pixels wide.", array(
+    // Do not validate absolute URLs, as this could mean external image.
+    if (!valid_url($form_state['values']['style_options']['channel']['core']['views_rss_core']['image'], TRUE)) {
+      // Check that image exists and is in acceptable format.
+      $image = image_load($form_state['values']['style_options']['channel']['core']['views_rss_core']['image']);
+      if (empty($image)) {
+        form_set_error('style_options][channel][core][views_rss_core][image', t('Unable to find %image or incorrect image format.', array(
           '%image' => $form_state['values']['style_options']['channel']['core']['views_rss_core']['image'],
-          '!width' => $image->info['width'],
         )));
       }
-      // Check image height.
-      if ($image->info['height'] > 400) {
-        form_set_error('style_options][channel][core][views_rss_core][image', t("Maximum allowed height of an image for feed channel's &lt;image&gt; element is 400 pixels. Specified %image is !height pixels high.", array(
-          '%image' => $form_state['values']['style_options']['channel']['core']['views_rss_core']['image'],
-          '!height' => $image->info['height'],
-        )));
+      else {
+        // Check image width.
+        if ($image->info['width'] > 144) {
+          form_set_error('style_options][channel][core][views_rss_core][image', t("Maximum allowed width of an image for feed channel's &lt;image&gt; element is 144 pixels. Specified %image is !width pixels wide.", array(
+            '%image' => $form_state['values']['style_options']['channel']['core']['views_rss_core']['image'],
+            '!width' => $image->info['width'],
+          )));
+        }
+        // Check image height.
+        if ($image->info['height'] > 400) {
+          form_set_error('style_options][channel][core][views_rss_core][image', t("Maximum allowed height of an image for feed channel's &lt;image&gt; element is 400 pixels. Specified %image is !height pixels high.", array(
+            '%image' => $form_state['values']['style_options']['channel']['core']['views_rss_core']['image'],
+            '!height' => $image->info['height'],
+          )));
+        }
       }
     }
   }
