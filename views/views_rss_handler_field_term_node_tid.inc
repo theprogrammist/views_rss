@@ -10,6 +10,8 @@ class views_rss_handler_field_term_node_tid extends views_handler_field_term_nod
   function option_definition() {
     $options = parent::option_definition();
     $options['rss_domain'] = array('default' => 'none');
+    $options['rss_include_parents'] = array('default' => 0);
+    $options['rss_include_vocabulary'] = array('default' => 0);
     return $options;
   }
 
@@ -19,6 +21,7 @@ class views_rss_handler_field_term_node_tid extends views_handler_field_term_nod
     $form['type']['#weight'] = 2;
     $form['separator']['#weight'] = 3;
     $form['type']['#options']['rss_category'] = t('RSS &lt;category&gt; element');
+    
     // Additional options for "domain" attribute.
     $form['rss_domain'] = array(
       '#type' => 'select',
@@ -30,13 +33,37 @@ class views_rss_handler_field_term_node_tid extends views_handler_field_term_nod
         'alias' => t('URL alias'),
       ),
       '#default_value' => $this->options['rss_domain'],
-      '#states' => array(
-        'visible' => array(
-          ':radio[name="options[type]"]' => array('value' => 'rss_category'),
-        ),
-      ),
+      '#dependency' => array('radio:options[type]' => array('rss_category')),
       '#weight' => 3,
     );
+    
+    // Output terms with their parents.
+    // Example: parent2/parent1/term
+    $form['rss_include_parents'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Include term parents'),
+      '#description' => t('Output terms from hierarchical vocabularies together with their parents (slash-delimited).'),
+      '#default_value' => $this->options['rss_include_parents'],
+      '#dependency' => array('radio:options[type]' => array('rss_category')),
+      '#weight' => 4,
+    );
+
+    // Output terms with their parents and vocabulary.
+    // Example: vocabulary/parent2/parent1/term
+    $form['rss_include_vocabulary'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Include term vocabulary'),
+      '#description' => t('Add vocabulary name before term parents.'),
+      '#default_value' => $this->options['rss_include_vocabulary'],
+      '#process' => array('ctools_dependent_process'),
+      '#dependency_count' => 2,
+      '#dependency' => array(
+        'radio:options[type]' => array('rss_category'),
+        'edit-options-rss-include-parents' => array(1),
+      ),
+      '#weight' => 5,
+    );
+
     // Hide "Link this field to its term page" checkbox
     // if "RSS <category> element" is selected as "Display type".
     $form['link_to_taxonomy']['#weight'] = 4;
@@ -56,6 +83,15 @@ class views_rss_handler_field_term_node_tid extends views_handler_field_term_nod
         foreach ($terms as $term_tid => $term) {
           if (isset($term['make_link'])) {
             $this->items[$node_nid][$term_tid]['make_link'] = FALSE;
+          }
+          if ($this->options['rss_domain'] != 'none' && empty($this->options['link_to_taxonomy'])) {
+            $this->items[$node_nid][$term_tid]['path'] = 'taxonomy/term/' . $term_tid;
+          }
+          if ($this->options['rss_include_parents']) {
+            $this->items[$node_nid][$term_tid]['parents'] = taxonomy_get_parents_all($term_tid);
+          }
+          if ($this->options['rss_include_vocabulary']) {
+            $this->items[$node_nid][$term_tid]['vocabulary'] = $term['vocabulary'];
           }
         }
       }
@@ -79,6 +115,22 @@ class views_rss_handler_field_term_node_tid extends views_handler_field_term_nod
         'key' => 'category',
         'value' => $item['name'],
       );
+      // Slash-delimited list of all parents with the term at the end.
+      // $item['parents'] array contains the current term as well.
+      if ($this->options['rss_include_parents'] && isset($item['parents'])) {
+        $parents = array();
+        // Add vocabulary if required.
+        if ($this->options['rss_include_vocabulary'] && isset($item['vocabulary'])) {
+          $parents[] = $item['vocabulary'];
+        }
+        // Add all terms (parent and current one).
+        foreach (array_reverse($item['parents']) as $parent) {
+          $parents[] = $parent->name;
+        }
+        if (count($parents)) {
+          $rss_element['value'] = implode('/', $parents);
+        }
+      }
       // Make sure that element value is XML-safe.
       views_rss_htmlspecialchars($rss_element);
       // Add "domain" attribute if required.
