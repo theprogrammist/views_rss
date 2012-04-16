@@ -46,8 +46,6 @@ class views_rss_handler_field_user_mail extends views_handler_field_user_mail {
         'key' => 'author',
         'value' => $value,
       );
-      // Make sure that element value is XML-safe.
-      views_rss_htmlspecialchars($rss_element);
       // Prepare and store raw-rendered values in view results,
       // the same way as values from standard field formatters are added.
       $rendered = array(

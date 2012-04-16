@@ -8,7 +8,7 @@
 /**
  * Module build version.
  */
-define('VIEWS_RSS_BUILD', '7.x-2.x-dev-20120413');
+define('VIEWS_RSS_BUILD', '7.x-2.x-dev-20120416');
 
 /**
  * Module installation path.
@@ -32,38 +32,6 @@ function views_rss_views_api() {
   return array(
     'api' => 3,
     'path' => VIEWS_RSS_PATH . '/views',
-  );
-}
-
-/**
- * Implements hook_theme().
- */
-function views_rss_theme() {
-  return array(
-    'views_view_views_rss_fields' => array(
-      'template' => 'views-view-views-rss-fields',
-      'file' => 'theme.inc',
-      'path' => VIEWS_RSS_PATH . '/theme',
-      'variables' => array(
-        'row' => NULL,
-        'view' => NULL,
-      ),
-    ),
-    'views_view_views_rss_field' => array(
-      'template' => 'views-view-views-rss-field',
-      'file' => 'theme.inc',
-      'path' => VIEWS_RSS_PATH . '/theme',
-      'variables' => array(
-        'elements' => NULL,
-        'element' => NULL,
-        'arguments' => NULL,
-        'value' => NULL,
-        'markup' => NULL,
-        'subelements' => NULL,
-        'item' => NULL,
-        'view' => NULL,
-      ),
-    ),
   );
 }
 
@@ -160,23 +128,34 @@ function views_rss_extract_element_names($element, $core_namespace = '') {
 
 /**
  * Preprocess callback.
- * Replaces relative paths in element value with absolute URLs.
+ * Replaces relative paths in element values with absolute URLs.
  * Based on preg_match from rel_to_abs module by lourenzo,
  * with added patch from issue #1335734 by joelstein.
  * @see http://drupal.org/project/rel_to_abs
  * @see http://drupal.org/node/1335734
  */
-function views_rss_rewrite_relative_paths(&$element) {
+function views_rss_rewrite_relative_paths(&$variables) {
   // Rewriting relative paths should be enabled by default,
   // so rewrite relative paths even if option value is not set.
   if (
-    !isset($element['view']->style_plugin->options['feed_settings']['absolute_paths'])
-    || !empty($element['view']->style_plugin->options['feed_settings']['absolute_paths'])
+    !isset($variables['view']->style_plugin->options['feed_settings']['absolute_paths'])
+    || !empty($variables['view']->style_plugin->options['feed_settings']['absolute_paths'])
   ) {
     global $base_path;
-    $pattern = '/(src|href)=(\'|")' . preg_quote($base_path, '/') . '/';
-    $replacement = '$1=$2' . url('<front>', array('absolute' => TRUE));
-    $element['value'] = preg_replace($pattern, $replacement, $element['value']);
+    foreach ($variables['elements'] as $delta => $element) {
+      if (isset($element['value'])) {
+        // Value is an array, so this is a set of subelements.
+        if (is_array($element['value'])) {
+          views_rss_rewrite_relative_paths($variables['elements'][$delta]['value']);
+        }
+        // Value is a string, so just process it.
+        else {
+          $pattern = '/(src|href)=(\'|")' . preg_quote($base_path, '/') . '/';
+          $replacement = '$1=$2' . url('<front>', array('absolute' => TRUE));
+          $variables['elements'][$delta]['value'] = preg_replace($pattern, $replacement, $element['value']);
+        }
+      }
+    }
   }
 }
 
@@ -189,14 +168,4 @@ function views_rss_map_assoc($array) {
     $array = drupal_map_assoc($array);
   }
   return $array;
-}
-
-/**
- * Preprocess callback.
- * Converts XML special characters to HTML entities.
- */
-function views_rss_htmlspecialchars(&$element) {
-  if (isset($element['value']) && !is_array($element['value'])) {
-    $element['value'] = check_plain(htmlspecialchars_decode($element['value'], ENT_QUOTES));
-  }
 }

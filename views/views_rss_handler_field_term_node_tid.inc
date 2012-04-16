@@ -1,10 +1,10 @@
 <?php
 
 /**
- * Field handler to display all taxonomy terms of a node.
- *
- * @ingroup views_field_handlers
+ * @file
+ * Field handler to provide additional control for the All Taxonomy Terms field.
  */
+
 class views_rss_handler_field_term_node_tid extends views_handler_field_term_node_tid {
 
   function option_definition() {
@@ -21,7 +21,7 @@ class views_rss_handler_field_term_node_tid extends views_handler_field_term_nod
     $form['type']['#weight'] = 2;
     $form['separator']['#weight'] = 3;
     $form['type']['#options']['rss_category'] = t('RSS &lt;category&gt; element');
-    
+
     // Additional options for "domain" attribute.
     $form['rss_domain'] = array(
       '#type' => 'select',
@@ -36,7 +36,7 @@ class views_rss_handler_field_term_node_tid extends views_handler_field_term_nod
       '#dependency' => array('radio:options[type]' => array('rss_category')),
       '#weight' => 3,
     );
-    
+
     // Output terms with their parents.
     // Example: parent2/parent1/term
     $form['rss_include_parents'] = array(
@@ -131,8 +131,6 @@ class views_rss_handler_field_term_node_tid extends views_handler_field_term_nod
           $rss_element['value'] = implode('/', $parents);
         }
       }
-      // Make sure that element value is XML-safe.
-      views_rss_htmlspecialchars($rss_element);
       // Add "domain" attribute if required.
       if ($this->options['rss_domain'] == 'path') {
         $rss_element['attributes']['domain'] = url('<front>', array('absolute' => TRUE)) . $item['path'];
