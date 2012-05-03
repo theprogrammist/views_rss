@@ -13,12 +13,12 @@ function views_rss_core_field_formatter_info() {
     // Generic image formatter for <enclosure> element.
     'enclosure_image' => array(
       'label' => t('RSS <enclosure> element'),
-      'field types' => array('image'),
+      'field types' => array('image', 'media'),
     ),
     // Generic file formatter for <enclosure> element.
     'enclosure_file' => array(
       'label' => t('RSS <enclosure> element'),
-      'field types' => array('file'),
+      'field types' => array('file', 'media'),
     ),
   );
   return $formatters;
@@ -106,6 +106,11 @@ function views_rss_core_field_formatter_view($entity_type, $entity, $field, $ins
       if (file_exists($real_path) || image_style_create_derivative($image_style, $item['uri'], $path)) {
         $item['filesize'] = filesize($real_path);
       }
+    }
+    elseif ($field['type'] == 'media') {
+      $uri = file_create_url($item['file']->uri);
+      $item['filesize'] = $item['file']->filesize;
+      $item['filemime'] = $item['file']->filemime;
     }
     else {
       $uri = file_create_url($item['uri']);
