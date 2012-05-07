@@ -10,15 +10,9 @@
  */
 function views_rss_core_field_formatter_info() {
   $formatters = array(
-    // Generic image formatter for <enclosure> element.
-    'enclosure_image' => array(
+    'enclosure' => array(
       'label' => t('RSS <enclosure> element'),
-      'field types' => array('image', 'media'),
-    ),
-    // Generic file formatter for <enclosure> element.
-    'enclosure_file' => array(
-      'label' => t('RSS <enclosure> element'),
-      'field types' => array('file', 'media'),
+      'field types' => array('file', 'media', 'image'),
     ),
   );
   return $formatters;
@@ -92,7 +86,10 @@ function views_rss_core_field_formatter_view($entity_type, $entity, $field, $ins
   $element = NULL;
   foreach ($items as $delta => $item) {
     // Inside a view item may contain NULL data. In that case, just return.
-    if (empty($item['fid'])) {
+    if (
+      ($field['type'] == 'file' || $field['type'] == 'image') && empty($item['fid'])
+      || $field['type'] == 'media' && empty($item['file']->fid)
+    ) {
       unset($items[$delta]);
       continue;
     }
