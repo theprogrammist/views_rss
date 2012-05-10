@@ -12,7 +12,7 @@ function views_rss_core_field_formatter_info() {
   $formatters = array(
     'enclosure' => array(
       'label' => t('RSS <enclosure> element'),
-      'field types' => array('file', 'media', 'image'),
+      'field types' => array('file', 'media', 'image', 'text', 'link_field'),
     ),
   );
   return $formatters;
@@ -89,6 +89,8 @@ function views_rss_core_field_formatter_view($entity_type, $entity, $field, $ins
     if (
       ($field['type'] == 'file' || $field['type'] == 'image') && empty($item['fid'])
       || $field['type'] == 'media' && empty($item['file']->fid)
+      || $field['type'] == 'text' && empty($item['safe_value'])
+      || $field['type'] == 'link_field' && empty($item['url'])
     ) {
       unset($items[$delta]);
       continue;
@@ -108,6 +110,14 @@ function views_rss_core_field_formatter_view($entity_type, $entity, $field, $ins
       $uri = file_create_url($item['file']->uri);
       $item['filesize'] = $item['file']->filesize;
       $item['filemime'] = $item['file']->filemime;
+    }
+    elseif ($field['type'] == 'text' || $field['type'] == 'link_field') {
+      $uri = ($field['type'] == 'text') ? $item['safe_value'] : $item['url'];
+      // Great idea to use get_headers() here by Dan Feidt,
+      // http://drupal.org/user/60005 Thanks Dan!
+      $headers = get_headers($uri, $format = 1);
+      $item['filesize'] = $headers['Content-Length'];
+      $item['filemime'] = $headers['Content-Type'];
     }
     else {
       $uri = file_create_url($item['uri']);
