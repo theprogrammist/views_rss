@@ -46,6 +46,16 @@ function views_rss_core_preprocess_channel_atom_link(&$variables) {
 }
 
 /**
+ * Preprocess function for channel <language> element.
+ */
+function views_rss_core_preprocess_channel_language(&$variables) {
+  global $language;
+  if (empty($variables['elements'][0]['value'])) {
+    $variables['elements'][0]['value'] = $language->language;
+  }
+}
+
+/**
  * Preprocess function for channel <category> element.
  */
 function views_rss_core_preprocess_channel_category(&$variables) {
