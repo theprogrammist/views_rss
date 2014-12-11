@@ -5,12 +5,26 @@
  * Preprocess functions for Views RSS: Core Elements module.
  */
 
+use Drupal\Component\Utility\String;
+use Drupal\Component\Utility\UrlHelper;
+
 /**
  * Preprocess function for channel <title> element.
  */
 function views_rss_core_preprocess_channel_title(&$variables) {
-  $view_title = $variables['view']->get_title();
-  $variables['elements'][0]['value'] = ($view_title) ? $view_title : variable_get('site_name', t('Drupal'));
+  $config = \Drupal::config('system.site');
+
+  if ($variables['view']->display_handler->getOption('sitename_title')) {
+    $title = $config->get('name');
+    if ($slogan = $config->get('slogan')) {
+      $title .= ' - ' . $slogan;
+    }
+  }
+  else {
+    $title = $variables['view']->getTitle();
+  }
+
+  $variables['elements'][0]['value'] = String::checkPlain($title);
 }
 
 /**
@@ -26,7 +40,13 @@ function views_rss_core_preprocess_channel_description(&$variables) {
  * Preprocess function for channel <link> element.
  */
 function views_rss_core_preprocess_channel_link(&$variables) {
-  $variables['elements'][0]['value'] = url('<front>', array('absolute' => TRUE));
+  $url_options = array('absolute' => TRUE);
+  $input = $variables['view']->getExposedInput();
+  if ($input) {
+    $url_options['query'] = $input;
+  }
+
+  $variables['elements'][0]['value'] = _url($variables['view']->getUrl(), $url_options);
 }
 
 /**
@@ -34,14 +54,14 @@ function views_rss_core_preprocess_channel_link(&$variables) {
  */
 function views_rss_core_preprocess_channel_atom_link(&$variables) {
   $url_options = array('absolute' => TRUE);
-  $input = $variables['view']->get_exposed_input();
+  $input = $variables['view']->getExposedInput();
   if ($input) {
     $url_options['query'] = $input;
   }
-  $url = url($variables['view']->get_url(), $url_options);
+
   $variables['elements'][0]['attributes'] = array(
     'rel' => 'self',
-    'href' => $url,
+    'href' => _url($variables['view']->getUrl(), $url_options),
   );
 }
 
@@ -173,6 +193,67 @@ function views_rss_core_preprocess_channel_cloud(&$variables) {
 }
 
 /**
+ * Preprocess function for item <category> element.
+ */
+function views_rss_core_preprocess_item_category(&$variables) {
+  // No raw values = no preprocessing.
+  if (empty($variables['raw'])) {
+    return;
+  }
+
+  $variables['elements'] = array();
+  foreach ($variables['raw'] as $item) {
+    $variables['elements'][] = array(
+      'key' => 'category',
+      'value' => $item['rendered']['#title'],
+    );
+  }
+}
+
+
+/**
+ * Preprocess function for item <enclosure> element.
+ */
+function views_rss_core_preprocess_item_enclosure(&$variables) {
+  // No raw values = no preprocessing.
+  if (empty($variables['raw'])) {
+    return;
+  }
+
+  $variables['elements'] = array();
+  foreach ($variables['raw'] as $item) {
+    // File fields.
+    if (!empty($item['rendered']['#file'])) {
+      $file = $item['rendered']['#file'];
+    }
+    // Image fields.
+    if (!empty($item['rendered']['#item']->entity)) {
+      $file = $item['rendered']['#item']->entity;
+    }
+    if (!empty($file)) {
+      $variables['elements'][] = array(
+        'key' => 'enclosure',
+        'attributes' => array(
+          'url' => $file->url(),
+          'length' => $file->getSize(),
+          'type' => $file->getMimeType(),
+        ),
+      );
+    }
+    // No file entity found, but something still was assigned to be displayed
+    // as enclosure, so we just put its value in the url attribute.
+    elseif (!empty($item['rendered']['#markup'])) {
+      $variables['elements'][] = array(
+        'key' => 'enclosure',
+        'attributes' => array(
+          'url' => $item['rendered']['#markup'],
+        ),
+      );
+    }
+  }
+}
+
+/**
  * Preprocess function for item <guid> element.
  */
 function views_rss_core_preprocess_item_guid(&$variables) {
@@ -182,8 +263,8 @@ function views_rss_core_preprocess_item_guid(&$variables) {
   }
   $is_permalink = 'false';
   if (
-    (!isset($variables['item']['views_rss_core']['link']) || empty($variables['item']['views_rss_core']['link']))
-    && valid_url($variables['elements'][0]['value'], TRUE)
+    !empty($variables['item']['views_rss_core']['link'])
+    && UrlHelper::isValid($variables['elements'][0]['value'], TRUE)
   ) {
     $is_permalink = 'true';
   }
@@ -194,14 +275,24 @@ function views_rss_core_preprocess_item_guid(&$variables) {
  * Preprocess function for item <source> element.
  */
 function views_rss_core_preprocess_item_source(&$variables) {
+  $config = \Drupal::config('system.site');
+
+  if ($variables['view']->display_handler->getOption('sitename_title')) {
+    $title = $config->get('name');
+    if ($slogan = $config->get('slogan')) {
+      $title .= ' - ' . $slogan;
+    }
+  }
+  else {
+    $title = $variables['view']->getTitle();
+  }
+
   $url_options = array('absolute' => TRUE);
-  $input = $variables['view']->get_exposed_input();
+  $input = $variables['view']->getExposedInput();
   if ($input) {
     $url_options['query'] = $input;
   }
-  $url = url($variables['view']->get_url(), $url_options);
 
-  $view_title = $variables['view']->get_title();
-  $variables['elements'][0]['value'] = (!empty($view_title)) ? $view_title : variable_get('site_name', t('Drupal'));
-  $variables['elements'][0]['attributes'] = array('url' => $url);
+  $variables['elements'][0]['value'] = String::checkPlain($title);
+  $variables['elements'][0]['attributes'] = array('url' => _url($variables['view']->getUrl(), $url_options));
 }

@@ -5,6 +5,8 @@
  * Provides core <channel> and <item> elements for Views RSS module.
  */
 
+use Drupal\Core\Url;
+
 /**
  * Module installation path.
  */
@@ -62,7 +64,7 @@ function views_rss_core_views_rss_channel_elements() {
   $elements['language'] = array(
     'preprocess functions' => array('views_rss_core_preprocess_channel_language'),
     'description' => t("The language the channel is written in. This allows aggregators to group all Italian language sites, for example, on a single page. See list of <a href='@w3c_url'>allowable values</a> for this element defined by the W3C. If left empty, it will use current site's language.", array(
-      '@w3c_url' => url('http://www.w3.org/TR/REC-html40/struct/dirlang.html', array('fragment' => 'langcodes')),
+      '@w3c_url' => Url::fromUri('http://www.w3.org/TR/REC-html40/struct/dirlang.html', array('fragment' => 'langcodes')),
     )),
     'help' => 'http://www.rssboard.org/rss-profile#element-channel-language',
   );
@@ -151,6 +153,7 @@ function views_rss_core_views_rss_item_elements() {
   );
   $elements['category'] = array(
     'description' => t('Includes the item in one or more categories.'),
+    'preprocess functions' => array('views_rss_core_preprocess_item_category'),
     'help' => 'http://www.rssboard.org/rss-profile#element-channel-item-category',
   );
   $elements['comments'] = array(
@@ -159,6 +162,7 @@ function views_rss_core_views_rss_item_elements() {
   );
   $elements['enclosure'] = array(
     'description' => t('Describes a media object that is attached to the item.'),
+    'preprocess functions' => array('views_rss_core_preprocess_item_enclosure'),
     'help' => 'http://www.rssboard.org/rss-profile#element-channel-item-enclosure',
   );
   $elements['guid'] = array(
@@ -223,23 +227,23 @@ function views_rss_core_views_rss_date_sources() {
 /**
  * Implements hook_views_query_alter().
  */
-function views_rss_core_views_query_alter(&$view, &$query) {
-  if ($view->style_plugin->definition['handler'] == 'views_rss_plugin_style_fields') {
-    $date_sources = views_rss_get('date_sources');
-    foreach (array_keys($date_sources) as $module) {
-      if (isset($date_sources[$module][$view->base_table])) {
-        // Select the most recent node creation date for <pubDate> element.
-        if (isset($date_sources[$module][$view->base_table]['pubDate'])) {
-          $query->fields['pubDate'] = $date_sources[$module][$view->base_table]['pubDate'];
-        }
-        // Select the most recent node update date for <lastBuildDate> element.
-        if (isset($date_sources[$module][$view->base_table]['lastBuildDate'])) {
-          $query->fields['lastBuildDate'] = $date_sources[$module][$view->base_table]['lastBuildDate'];
-        }
-      }
-    }
-  }
-}
+//function views_rss_core_views_query_alter(&$view, &$query) {
+//  if ($view->style_plugin->definition['handler'] == 'views_rss_plugin_style_fields') {
+//    $date_sources = views_rss_get('date_sources');
+//    foreach (array_keys($date_sources) as $module) {
+//      if (isset($date_sources[$module][$view->base_table])) {
+//        // Select the most recent node creation date for <pubDate> element.
+//        if (isset($date_sources[$module][$view->base_table]['pubDate'])) {
+//          $query->fields['pubDate'] = $date_sources[$module][$view->base_table]['pubDate'];
+//        }
+//        // Select the most recent node update date for <lastBuildDate> element.
+//        if (isset($date_sources[$module][$view->base_table]['lastBuildDate'])) {
+//          $query->fields['lastBuildDate'] = $date_sources[$module][$view->base_table]['lastBuildDate'];
+//        }
+//      }
+//    }
+//  }
+//}
 
 /**
  * Implements hook_views_rss_options_form_validate().

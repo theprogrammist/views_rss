@@ -6,36 +6,6 @@
  */
 
 /**
- * Module build version.
- */
-define('VIEWS_RSS_BUILD', '7.x-2.x-dev-20120416');
-
-/**
- * Module installation path.
- */
-define('VIEWS_RSS_PATH', drupal_get_path('module', 'views_rss'));
-
-/**
- * In theory, theme.inc should be automatically loaded from hook_views_plugins()
- * implementation in views_rss.views.inc - which usually is the case, apart from
- * when "Rescan template files" in view configuration is used, when new template
- * files are being detected, but theme.inc for some reason is not loaded, so
- * template_preprocess_views_view_views_rss() is not available, and we're getting
- * "Array" instead of proper feed data as a result.
- */
-include_once VIEWS_RSS_PATH . '/theme/theme.inc';
-
-/**
- * Implements hook_views_api().
- */
-function views_rss_views_api() {
-  return array(
-    'api' => 3,
-    'path' => VIEWS_RSS_PATH . '/views',
-  );
-}
-
-/**
  * Returns an array of item elements defined by other modules
  * with hook_views_rss_item_elements() and optionally altered with
  * hook_views_rss_item_elements_alter() implementations.
@@ -44,17 +14,18 @@ function views_rss_get($key, $rebuild = FALSE) {
   static $data = array();
   if (!isset($data[$key]) || empty($data[$key]) || $rebuild === TRUE) {
     $cid = 'views_rss:' . $key;
-    $cached = cache_get($cid, 'cache_views');
-    if (is_object($cached) && isset($cached->data) && $rebuild === FALSE) {
-      $data[$key] = $cached->data;
+    $cache = \Drupal::cache('data')->get($cid);
+    if (isset($cache->data) && $rebuild === FALSE) {
+      $data[$key] = $cache->data;
     }
     else {
       // Fetch item elements provided by other modules. We need to manually call
       // each module so that we can know which module a given item came from.
       $data[$key] = array();
       $hook_name = 'views_rss_' . $key;
-      foreach (module_implements($hook_name) as $module) {
-        $module_data = call_user_func($module . '_' . $hook_name);
+      $modules = \Drupal::moduleHandler()->getImplementations($hook_name);
+      foreach ($modules as $module) {
+        $module_data = \Drupal::moduleHandler()->invoke($module, $hook_name);
         if (isset($module_data) && is_array($module_data)) {
           $data[$key][$module] = $module_data;
         }
@@ -67,9 +38,9 @@ function views_rss_get($key, $rebuild = FALSE) {
         $data[$key] = $function($data[$key]);
       }
       // Allow other modules to alter obtained item elements.
-      drupal_alter($hook_name, $data[$key]);
+      \Drupal::moduleHandler()->alter($hook_name, $data[$key]);
       // Store it infinitely in cache (rebuild only on cache clear).
-      cache_set($cid, $data[$key], 'cache_views');
+      \Drupal::cache('data')->set($cid, $data[$key]);
     }
   }
   return $data[$key];
@@ -127,10 +98,11 @@ function views_rss_extract_element_names($element, $core_namespace = '') {
 }
 
 /**
- * Preprocess callback.
- * Replaces relative paths in element values with absolute URLs.
+ * Element preprocess callback: replaces relative paths with absolute URLs.
+ *
  * Based on preg_match from rel_to_abs module by lourenzo,
  * with added patch from issue #1335734 by joelstein.
+ *
  * @see http://drupal.org/project/rel_to_abs
  * @see http://drupal.org/node/1335734
  */
