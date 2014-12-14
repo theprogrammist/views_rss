@@ -230,26 +230,36 @@ function views_rss_core_preprocess_item_enclosure(&$variables) {
     if (!empty($item['rendered']['#item']->entity)) {
       $file = $item['rendered']['#item']->entity;
     }
+
+    // Start building RSS element.
+    $element = array(
+      'key' => 'enclosure',
+      'attributes' => array(),
+    );
+
+    // File entity found.
     if (!empty($file)) {
-      $variables['elements'][] = array(
-        'key' => 'enclosure',
-        'attributes' => array(
+      // Image style is defined, need to link to resized version.
+      if ($image_style_name = $item['rendered']['#image_style']) {
+        $image_style = entity_load('image_style', $image_style_name);
+        $element['attributes']['url'] = $image_style->buildUrl($file->getFileUri());
+      }
+      // Normal image size.
+      else {
+        $element['attributes'] = array(
           'url' => $file->url(),
           'length' => $file->getSize(),
           'type' => $file->getMimeType(),
-        ),
-      );
+        );
+      }
     }
     // No file entity found, but something still was assigned to be displayed
     // as enclosure, so we just put its value in the url attribute.
     elseif (!empty($item['rendered']['#markup'])) {
-      $variables['elements'][] = array(
-        'key' => 'enclosure',
-        'attributes' => array(
-          'url' => $item['rendered']['#markup'],
-        ),
-      );
+      $element['attributes']['url'] = $item['rendered']['#markup'];
     }
+
+    $variables['elements'][] = $element;
   }
 }
 
