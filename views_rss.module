@@ -137,7 +137,7 @@ function views_rss_rewrite_relative_paths(&$variables) {
  */
 function views_rss_map_assoc($array) {
   if (!(array_keys($array) !== range(0, count($array) - 1))) {
-    $array = drupal_map_assoc($array);
+    $array = array_combine($array, $array);
   }
   return $array;
 }

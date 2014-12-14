@@ -8,19 +8,9 @@
 use Drupal\Core\Url;
 
 /**
- * Module installation path.
- */
-define('VIEWS_RSS_CORE_PATH', drupal_get_path('module', 'views_rss_core'));
-
-/**
- * Include file with field formatters.
- */
-include_once VIEWS_RSS_CORE_PATH .'/views_rss_core.field.inc';
-
-/**
  * Include file with all preprocess functions.
  */
-include_once VIEWS_RSS_CORE_PATH . '/views_rss_core.inc';
+include_once drupal_get_path('module', 'views_rss_core') . '/views_rss_core.inc';
 
 /**
  * Implementation of hook_views_rss_namespaces().
