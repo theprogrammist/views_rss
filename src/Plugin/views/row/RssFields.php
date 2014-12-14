@@ -78,6 +78,9 @@ class RssFields extends RowPluginBase {
             if (!empty($this->options['item'][$namespace][$module][$element_name])) {
               $default_value = $this->options['item'][$namespace][$module][$element_name];
             }
+            elseif (!empty($definition['group'])) {
+              $default_value = $this->options['item'][$namespace][$module][$definition['group']][$element_name];
+            }
             $form_item = array(
               '#type' => 'select',
               '#title' => Xss::filter(isset($definition['title']) ? $definition['title'] : $element_name),
@@ -150,10 +153,21 @@ class RssFields extends RowPluginBase {
       $item = $raw_item = array();
 
       foreach ($item_elements as $module => $module_item_elements) {
-        foreach (array_keys($module_item_elements) as $element) {
-
+        foreach ($module_item_elements as $element => $definition) {
           list($namespace, $element_name) = views_rss_extract_element_names($element, 'core');
-          $field_name = !empty($this->options['item'][$namespace][$module][$element_name]) ? $this->options['item'][$namespace][$module][$element_name] : NULL;
+          
+          if (!empty($this->options['item'][$namespace][$module][$element_name])) {
+            $field_name = $this->options['item'][$namespace][$module][$element_name];
+          }
+          elseif (
+            !empty($definition['group'])
+            && !empty($this->options['item'][$namespace][$module][$definition['group']][$element_name])
+          ) {
+            $field_name = $this->options['item'][$namespace][$module][$definition['group']][$element_name];
+          }
+          else {
+            $field_name = NULL;
+          }
 
           // Assign values for all elements, not only those defined in view settings.
           // If element value is not defined in view settings, let's just assign NULL.
