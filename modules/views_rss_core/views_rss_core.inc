@@ -261,6 +261,13 @@ function views_rss_core_preprocess_item_enclosure(&$variables) {
     // as enclosure, so we just put its value in the url attribute.
     elseif (!empty($item['rendered']['#markup'])) {
       $element['attributes']['url'] = $item['rendered']['#markup'];
+      $headers = get_headers($item['rendered']['#markup'], $format = 1);
+      if (!empty($headers['Content-Length'])) {
+        $element['attributes']['length'] = $headers['Content-Length'];
+      }
+      if (!empty($headers['Content-Type'])) {
+        $element['attributes']['type'] = $headers['Content-Type'];
+      }
     }
 
     $variables['elements'][] = $element;
