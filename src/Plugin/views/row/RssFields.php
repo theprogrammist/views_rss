@@ -155,7 +155,7 @@ class RssFields extends RowPluginBase {
       foreach ($item_elements as $module => $module_item_elements) {
         foreach ($module_item_elements as $element => $definition) {
           list($namespace, $element_name) = views_rss_extract_element_names($element, 'core');
-          
+
           if (!empty($this->options['item'][$namespace][$module][$element_name])) {
             $field_name = $this->options['item'][$namespace][$module][$element_name];
           }

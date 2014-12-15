@@ -210,7 +210,6 @@ function views_rss_core_preprocess_item_category(&$variables) {
   }
 }
 
-
 /**
  * Preprocess function for item <enclosure> element.
  */
@@ -242,7 +241,12 @@ function views_rss_core_preprocess_item_enclosure(&$variables) {
       // Image style is defined, need to link to resized version.
       if ($image_style_name = $item['rendered']['#image_style']) {
         $image_style = entity_load('image_style', $image_style_name);
-        $element['attributes']['url'] = $image_style->buildUrl($file->getFileUri());
+        $uri = $image_style->buildUri($file->getFileUri());
+        $element['attributes'] = array(
+          'url' => $uri,
+          'length' => filesize(drupal_realpath($uri)),
+          'type' => $file->getMimeType(),
+        );
       }
       // Normal image size.
       else {
