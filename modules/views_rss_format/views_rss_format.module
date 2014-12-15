@@ -1,0 +1,86 @@
+<?php
+
+/**
+ * @file
+ * Provides custom version of format_xml_elements() function allowing to skip
+ * special character encoding in selected XML element values and relevant
+ * template_preprocess_views_view_row_rss() implementation.
+ */
+
+use Drupal\Component\Utility\String;
+use Drupal\Component\Utility\SafeMarkup;
+use Drupal\Core\Template\Attribute;
+
+/**
+ * Formats XML elements.
+ *
+ * Note: It is the caller's responsibility to sanitize any input parameters.
+ * This function does not perform sanitization.
+ *
+ * @param $array
+ *   An array where each item represents an element and is either a:
+ *   - (key => value) pair (<key>value</key>)
+ *   - Associative array with fields:
+ *     - 'key': The element name. Element names are not sanitized, so do not
+ *       pass user input.
+ *     - 'value': element contents
+ *     - 'attributes': associative array of element attributes
+ *
+ * In both cases, 'value' can be a simple string, or it can be another array
+ * with the same format as $array itself for nesting.
+ *
+ * @see format_xml_elements()
+ */
+function views_rss_format_xml_elements($array) {
+  $output = '';
+  foreach ($array as $key => $value) {
+    if (is_numeric($key)) {
+      if ($value['key']) {
+        $output .= ' <' . $value['key'];
+        if (isset($value['attributes']) && is_array($value['attributes'])) {
+          $output .= new Attribute($value['attributes']);
+        }
+
+        if (isset($value['value']) && $value['value'] != '') {
+          $output .= '>' . (is_array($value['value']) ? views_rss_format_xml_elements($value['value']) : (!empty($value['encoded']) ? $value['value'] : String::checkPlain($value['value']))) . '</' . $value['key'] . ">\n";
+        }
+        else {
+          $output .= " />\n";
+        }
+      }
+    }
+    else {
+      $output .= ' <' . $key . '>' . (is_array($value) ? views_rss_format_xml_elements($value) : String::checkPlain($value)) . "</$key>\n";
+    }
+  }
+  // @todo This is marking the output string as safe HTML, but we have only
+  //   sanitized the attributes and tag values, not the tag names, and we
+  //   cannot guarantee the assembled markup is safe. Consider a fix in:
+  //   https://www.drupal.org/node/2296885
+  return SafeMarkup::set($output);
+}
+
+/**
+ * Prepares variables for views RSS item templates.
+ *
+ * Uses custom views_rss_format_xml_elements() for formatting XML elements
+ * instead of core format_xml_elements(), thus allowing to skip special
+ * character encoding in selected XML element values (when $element['encoded']
+ * property is set to TRUE).
+ *
+ * Default template: views-view-row-rss.html.twig.
+ *
+ * @param array $variables
+ *   An associative array containing:
+ *   - row: The raw results rows.
+ *
+ * @see template_preprocess_views_view_row_rss()
+ */
+function views_rss_format_preprocess_views_view_row_rss(&$variables) {
+  $item = $variables['row'];
+
+  $variables['title'] = String::checkPlain($item->title);
+  $variables['link'] = check_url($item->link);
+  $variables['description'] = String::checkPlain($item->description);
+  $variables['item_elements'] = empty($item->elements) ? '' : views_rss_format_xml_elements($item->elements);
+}
