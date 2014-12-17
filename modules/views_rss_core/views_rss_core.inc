@@ -194,6 +194,11 @@ function views_rss_core_preprocess_channel_cloud(&$variables) {
 
 /**
  * Preprocess function for item <category> element.
+ *
+ * See http://www.rssboard.org/rss-profile#element-channel-item-category
+ * for RSS Advisory Board requirements/recommendations.
+ *
+ * @see RSSCategoryFormatter::viewElements()
  */
 function views_rss_core_preprocess_item_category(&$variables) {
   // No raw values = no preprocessing.
@@ -203,10 +208,32 @@ function views_rss_core_preprocess_item_category(&$variables) {
 
   $variables['elements'] = array();
   foreach ($variables['raw'] as $item) {
-    $variables['elements'][] = array(
+
+    // According to RSS Advisory Board, the category's value should be
+    // a slash-delimited string that identifies a hierarchical position
+    // in the taxonomy.
+    $values = array();
+    // Load parent term objects (this includes original term as well).
+    if ($parents = \Drupal::entityManager()->getStorage('taxonomy_term')->loadAllParents($item['raw']->entity->id())) {
+      foreach ($parents as $parent) {
+        $values[] = $parent->label();
+      }
+    }
+
+    $element = array(
       'key' => 'category',
-      'value' => $item['rendered']['#title'],
+      'value' => implode('/', array_reverse($values)),
     );
+
+    // Drupal uses term URL for domain attribute. RSS Best Practices say that
+    // a domain attribute identifies the category's taxonomy - which suggests
+    // either vocabulary name or its URL. We don't have any safe way to know
+    // public vocabulary URL, could use its name instead though? @TODO?
+    if ($item['raw']->target_id) {
+      $element['attributes']['domain'] = $item['raw']->entity->url('canonical', array('absolute' => TRUE));
+    }
+
+    $variables['elements'][] = $element;
   }
 }
 
