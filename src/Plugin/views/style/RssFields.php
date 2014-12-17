@@ -46,6 +46,20 @@ class RssFields extends StylePluginBase {
   /**
    * {@inheritdoc}
    */
+  public function validate() {
+    $errors = parent::validate();
+
+    $plugin = $this->displayHandler->getPlugin('row');
+    if ($plugin->getPluginId() !== 'views_rss_fields') {
+      $errors[] = $this->t('Style %style requires an <em>RSS Feed - Fields</em> row plugin.', array('%style' => $this->definition['title']));
+    }
+
+    return $errors;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function attachTo(array &$build, $display_id, $path, $title) {
     $url_options = array();
     $input = $this->view->getExposedInput();

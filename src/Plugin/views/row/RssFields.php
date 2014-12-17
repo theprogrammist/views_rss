@@ -128,6 +128,18 @@ class RssFields extends RowPluginBase {
 
   public function validate() {
     $errors = parent::validate();
+
+    if (!\Drupal::moduleHandler()->moduleExists('views_rss_core')) {
+      $errors[] = $this->t('You have to enable <em>Views RSS: Core Elements</em> module to have access to basic feed elements.');
+    }
+    else {
+      // An item MUST contain either a title or description.
+      // All other elements are optional according to RSS specification.
+      if (empty($this->options['item']['core']['views_rss_core']['title']) && empty($this->options['item']['core']['views_rss_core']['description'])) {
+        $errors[] = $this->t('You have to configure either <em>title</em> or <em>description</em> core element.');
+      }
+    }
+
     return $errors;
   }
 
