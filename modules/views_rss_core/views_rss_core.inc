@@ -33,7 +33,7 @@ function views_rss_core_preprocess_channel_title(&$variables) {
  */
 function views_rss_core_preprocess_channel_description(&$variables) {
   if (empty($variables['elements'][0]['value'])) {
-    $variables['elements'][0]['value'] = variable_get('site_slogan', '');
+    $variables['elements'][0]['value'] = \Drupal::config('system.site')->get('slogan');
   }
 }
 
