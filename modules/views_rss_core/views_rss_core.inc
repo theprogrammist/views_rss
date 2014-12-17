@@ -41,13 +41,10 @@ function views_rss_core_preprocess_channel_description(&$variables) {
  * Preprocess function for channel <link> element.
  */
 function views_rss_core_preprocess_channel_link(&$variables) {
-  $url_options = array('absolute' => TRUE);
-  $input = $variables['view']->getExposedInput();
-  if ($input) {
-    $url_options['query'] = $input;
-  }
-
-  $variables['elements'][0]['value'] = _url($variables['view']->getUrl(), $url_options);
+  // The link element identifies the URL of the web site associated with
+  // the feed (and not the feed's URL, as Drupal makes you think).
+  // See http://www.rssboard.org/rss-profile#element-channel-link
+  $variables['elements'][0]['value'] = $GLOBALS['base_url'];
 }
 
 /**
