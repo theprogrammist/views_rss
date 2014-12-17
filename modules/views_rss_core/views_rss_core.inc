@@ -202,12 +202,12 @@ function views_rss_core_preprocess_channel_cloud(&$variables) {
  */
 function views_rss_core_preprocess_item_category(&$variables) {
   // No raw values = no preprocessing.
-  if (empty($variables['raw'])) {
+  if (empty($variables['raw']['items'])) {
     return;
   }
 
   $variables['elements'] = array();
-  foreach ($variables['raw'] as $item) {
+  foreach ($variables['raw']['items'] as $item) {
 
     // According to RSS Advisory Board, the category's value should be
     // a slash-delimited string that identifies a hierarchical position
@@ -242,12 +242,12 @@ function views_rss_core_preprocess_item_category(&$variables) {
  */
 function views_rss_core_preprocess_item_enclosure(&$variables) {
   // No raw values = no preprocessing.
-  if (empty($variables['raw'])) {
+  if (empty($variables['raw']['items'])) {
     return;
   }
 
   $variables['elements'] = array();
-  foreach ($variables['raw'] as $item) {
+  foreach ($variables['raw']['items'] as $item) {
     // File fields.
     if (!empty($item['rendered']['#file'])) {
       $file = $item['rendered']['#file'];

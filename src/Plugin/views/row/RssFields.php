@@ -141,13 +141,13 @@ class RssFields extends RowPluginBase {
         // Also let's keep raw value for further processing.
         $raw_fields[$field_id] = array();
         if (method_exists($this->view->field[$field_id], 'getItems')) {
-          $raw_fields[$field_id] = $this->view->field[$field_id]->getItems($row);
+          $raw_fields[$field_id]['items'] = $this->view->field[$field_id]->getItems($row);
         }
+
       }
     }
 
     // Rewrite view rows to XML item rows.
-    $items = $raw_items = array();
     $item_elements = views_rss_get('item_elements');
     foreach ($rendered_fields as $field_id => $rendered_field) {
       $item = $raw_item = array();
