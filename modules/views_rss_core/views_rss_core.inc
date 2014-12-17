@@ -103,29 +103,32 @@ function views_rss_core_preprocess_channel_image(&$variables) {
   if (empty($variables['elements'][0]['value'])) {
     return;
   }
-  $path = $variables['elements'][0]['value'];
+
+  $image_path = $variables['elements'][0]['value'];
   // Get value of channel <title> element from its preprocess function.
   views_rss_core_preprocess_channel_title($variables);
   $title = $variables['elements'][0]['value'];
-  // Get value of channel <title> element from its preprocess function.
-  views_rss_core_preprocess_channel_link($variables);
-  $link = $variables['elements'][0]['value'];
   // Create subelements array.
   $variables['elements'][0]['value'] = array(
-    'url' => file_create_url($path),
+    // The image's url element identifies the URL of the image.
+    'url' => file_create_url($image_path),
+    // The image's title element SHOULD have the same text as the channel's
+    // title element and be suitable for use as the alt attribute of the img
+    // tag in an HTML rendering.
     'title' => $title,
-    'link' => $link,
+    // The image's link element identifies the URL of the web site represented
+    // by the image (not the feed URL).
+    'link' => $GLOBALS['base_url'],
   );
   // Try to get image description from website's mission.
-  $site_slogan = variable_get('site_slogan', '');
-  if (!empty($site_slogan)) {
+  if ($site_slogan = \Drupal::config('system.site')->get('slogan')) {
     $variables['elements'][0]['value']['description'] = $site_slogan;
   }
   // Get image width and height.
-  $image = image_load($path);
+  $image = Drupal::service('image.factory')->get($image_path);
   if (!empty($image)) {
-    $variables['elements'][0]['value']['width'] = $image->info['width'];
-    $variables['elements'][0]['value']['height'] = $image->info['height'];
+    $variables['elements'][0]['value']['width'] = $image->getWidth();
+    $variables['elements'][0]['value']['height'] = $image->getHeight();
   }
 }
 
