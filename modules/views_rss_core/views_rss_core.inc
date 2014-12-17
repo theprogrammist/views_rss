@@ -7,6 +7,7 @@
 
 use Drupal\Component\Utility\String;
 use Drupal\Component\Utility\UrlHelper;
+use Drupal\taxonomy\Entity\Term;
 
 /**
  * Preprocess function for channel <title> element.
@@ -208,13 +209,25 @@ function views_rss_core_preprocess_item_category(&$variables) {
 
   $variables['elements'] = array();
   foreach ($variables['raw']['items'] as $item) {
+    // When 'Content: <vocabulary_name>' was selected for source of category
+    // element, we will get all we need in raw values.
+    if ($item['raw']->target_id) {
+      $term = $item['raw']->entity;
+    }
+    // On the other hand, when 'Content: All taxonomy terms' field was added
+    // as a source for category element, we won't have raw values, instead
+    // an array containing only tid, name, vocabulary_vid and vocabulary keys,
+    // so we need to load full term object first before processing it further.
+    elseif (!empty($item['tid'])) {
+      $term = Term::load($item['tid']);
+    }
 
     // According to RSS Advisory Board, the category's value should be
     // a slash-delimited string that identifies a hierarchical position
     // in the taxonomy.
     $values = array();
     // Load parent term objects (this includes original term as well).
-    if ($parents = \Drupal::entityManager()->getStorage('taxonomy_term')->loadAllParents($item['raw']->entity->id())) {
+    if ($parents = \Drupal::entityManager()->getStorage('taxonomy_term')->loadAllParents($term->id())) {
       foreach ($parents as $parent) {
         $values[] = $parent->label();
       }
@@ -223,15 +236,14 @@ function views_rss_core_preprocess_item_category(&$variables) {
     $element = array(
       'key' => 'category',
       'value' => implode('/', array_reverse($values)),
+      // Drupal uses term URL for domain attribute. RSS Best Practices say that
+      // a domain attribute identifies the category's taxonomy - which suggests
+      // either vocabulary name or its URL. We don't have any safe way to know
+      // public vocabulary URL, could use its name instead though? @TODO?
+      'attributes' => array(
+        'domain' => $term->url('canonical', array('absolute' => TRUE)),
+      ),
     );
-
-    // Drupal uses term URL for domain attribute. RSS Best Practices say that
-    // a domain attribute identifies the category's taxonomy - which suggests
-    // either vocabulary name or its URL. We don't have any safe way to know
-    // public vocabulary URL, could use its name instead though? @TODO?
-    if ($item['raw']->target_id) {
-      $element['attributes']['domain'] = $item['raw']->entity->url('canonical', array('absolute' => TRUE));
-    }
 
     $variables['elements'][] = $element;
   }
