@@ -277,3 +277,45 @@ function views_rss_core_views_rss_options_form_validate($form, &$form_state) {
     }
   }
 }
+
+/**
+ * Prepares correct variables for RSS feed templates.
+ *
+ * Drupal core template_preprocess_views_view_rss() forces values of some
+ * elements, thus making them not configurable through Views RSS (these are
+ * channel 'title', 'description' and 'link' elements). Because we want them
+ * all to be configurable through Views RSS' preprocess hooks, they need to be
+ * reprocessed here again, after template_preprocess_views_view_rss() has done
+ * its mess.
+ *
+ * @see template_preprocess_views_view_rss()
+ */
+function views_rss_core_preprocess_views_view_rss(&$variables) {
+  $view  = $variables['view'];
+  $style = $view->style_plugin;
+
+  // Get Views RSS-configured values for channel 'title', 'description'
+  // and 'link' values and re-add them to theme variables, at the same time
+  // unsetting them from $style->channel_elements, which would need to be
+  // converted to XML again without them.
+  foreach ($style->channel_elements as $delta => $channel_element) {
+    $key = $channel_element['key'];
+    // These 3 elements have the same name as their $variables key.
+    if (in_array($key, array('title', 'description', 'link'))) {
+      // Assign the value received from Views RSS preprocess function, instead
+      // the one added by template_preprocess_views_view_rss().
+      $variables[$key] = $channel_element['value'];
+      // Also, unset these elements from $style->channel_elements to avoid
+      // having them printed out twice in feed's channel element.
+      unset($style->channel_elements[$delta]);
+    }
+    // And then, why would all $variables key names use the same names as RSS
+    // elements, right? Let's make one different! Thanks Drupal. Seriously.
+    if ($key == 'language') {
+      $variables['langcode'] = $channel_element['value'];
+      unset($style->channel_elements[$delta]);
+    }
+  }
+  // Format channel XML elements again, without those 3 elements removed above.
+  $variables['channel_elements'] = format_xml_elements($style->channel_elements);
+}
