@@ -179,36 +179,52 @@ function views_rss_core_views_rss_item_elements() {
 function views_rss_core_views_rss_date_sources() {
   $sources['node'] = array(
     'pubDate' => array(
-      'table' => 'node',
+      'table' => 'node_field_data',
       'field' => 'created',
     ),
     'lastBuildDate' => array(
-      'table' => 'node',
+      'table' => 'node_field_data',
       'field' => 'changed',
     ),
   );
   $sources['node_revisions'] = array(
     'pubDate' => array(
-      'table' => 'node_revisions',
-      'field' => 'timestamp',
+      'table' => 'node_field_revision',
+      'field' => 'created',
+    ),
+    'lastBuildDate' => array(
+      'table' => 'node_field_revision',
+      'field' => 'changed',
     ),
   );
   $sources['comments'] = array(
+    'pubDate' => array(
+      'table' => 'comment_field_data',
+      'field' => 'created',
+    ),
     'lastBuildDate' => array(
-      'table' => 'comments',
-      'field' => 'timestamp',
+      'table' => 'comment_field_data',
+      'field' => 'changed',
     ),
   );
   $sources['files'] = array(
     'pubDate' => array(
-      'table' => 'files',
-      'field' => 'timestamp',
+      'table' => 'file_managed',
+      'field' => 'created',
+    ),
+    'lastBuildDate' => array(
+      'table' => 'file_managed',
+      'field' => 'changed',
     ),
   );
   $sources['users'] = array(
     'pubDate' => array(
-      'table' => 'users',
+      'table' => 'users_field_data',
       'field' => 'created',
+    ),
+    'lastBuildDate' => array(
+      'table' => 'users_field_data',
+      'field' => 'changed',
     ),
   );
   return $sources;
@@ -217,23 +233,24 @@ function views_rss_core_views_rss_date_sources() {
 /**
  * Implements hook_views_query_alter().
  */
-//function views_rss_core_views_query_alter(&$view, &$query) {
-//  if ($view->style_plugin->definition['handler'] == 'views_rss_plugin_style_fields') {
-//    $date_sources = views_rss_get('date_sources');
-//    foreach (array_keys($date_sources) as $module) {
-//      if (isset($date_sources[$module][$view->base_table])) {
-//        // Select the most recent node creation date for <pubDate> element.
-//        if (isset($date_sources[$module][$view->base_table]['pubDate'])) {
-//          $query->fields['pubDate'] = $date_sources[$module][$view->base_table]['pubDate'];
-//        }
-//        // Select the most recent node update date for <lastBuildDate> element.
-//        if (isset($date_sources[$module][$view->base_table]['lastBuildDate'])) {
-//          $query->fields['lastBuildDate'] = $date_sources[$module][$view->base_table]['lastBuildDate'];
-//        }
-//      }
-//    }
-//  }
-//}
+function views_rss_core_views_query_alter($view, $query) {
+  if ($view->style_plugin->getPluginId() == 'rss_fields') {
+    $base_table = reset(array_keys($view->getBaseTables()));
+    $date_sources = views_rss_get('date_sources');
+    foreach (array_keys($date_sources) as $module) {
+      if (isset($date_sources[$module][$base_table])) {
+        // Select the most recent node creation date for <pubDate> element.
+        if (isset($date_sources[$module][$base_table]['pubDate'])) {
+          $query->fields['pubDate'] = $date_sources[$module][$base_table]['pubDate'];
+        }
+        // Select the most recent node update date for <lastBuildDate> element.
+        if (isset($date_sources[$module][$base_table]['lastBuildDate'])) {
+          $query->fields['lastBuildDate'] = $date_sources[$module][$base_table]['lastBuildDate'];
+        }
+      }
+    }
+  }
+}
 
 /**
  * Implements hook_views_rss_options_form_validate().
