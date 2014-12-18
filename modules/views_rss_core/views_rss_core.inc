@@ -278,11 +278,19 @@ function views_rss_core_preprocess_item_enclosure(&$variables) {
     if (!empty($file)) {
       // Image style is defined, need to link to resized version.
       if ($image_style_name = $item['rendered']['#image_style']) {
+        $image_uri = $file->getFileUri();
         $image_style = entity_load('image_style', $image_style_name);
-        $uri = $image_style->buildUri($file->getFileUri());
+        $image_style_uri = $image_style->buildUri($image_uri);
+
+        // If the derivative doesn't exist yet, we won't be able to get its size
+        // to add it to the 'length' attribute, so we need to create it first.
+        if (!file_exists($image_style_uri)) {
+          $image_style->createDerivative($image_uri, $image_style_uri);
+        }
+
         $element['attributes'] = array(
-          'url' => $uri,
-          'length' => filesize(drupal_realpath($uri)),
+          'url' => $image_style->buildUrl($image_uri),
+          'length' => filesize($image_style_uri),
           'type' => $file->getMimeType(),
         );
       }
