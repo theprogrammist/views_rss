@@ -44,7 +44,7 @@ function views_rss_core_preprocess_channel_link(&$variables) {
   // The link element identifies the URL of the web site associated with
   // the feed (and not the feed's URL, as Drupal makes you think).
   // See http://www.rssboard.org/rss-profile#element-channel-link
-  $variables['elements'][0]['value'] = $GLOBALS['base_url'];
+  $variables['elements'][0]['value'] = $GLOBALS['base_url'] . '/';
 }
 
 /**
@@ -114,7 +114,7 @@ function views_rss_core_preprocess_channel_image(&$variables) {
     'title' => $title,
     // The image's link element identifies the URL of the web site represented
     // by the image (not the feed URL).
-    'link' => $GLOBALS['base_url'],
+    'link' => $GLOBALS['base_url'] . '/',
   );
   // Try to get image description from website's mission.
   if ($site_slogan = \Drupal::config('system.site')->get('slogan')) {
