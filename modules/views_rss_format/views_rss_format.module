@@ -7,9 +7,9 @@
  * template_preprocess_views_view_row_rss() implementation.
  */
 
-use Drupal\Component\Utility\String;
-use Drupal\Component\Utility\SafeMarkup;
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Template\Attribute;
+use Drupal\Component\Utility\UrlHelper;
 
 /**
  * Formats XML elements.
@@ -79,8 +79,8 @@ function views_rss_format_xml_elements($array) {
 function views_rss_format_preprocess_views_view_row_rss(&$variables) {
   $item = $variables['row'];
 
-  $variables['title'] = String::checkPlain($item->title);
-  $variables['link'] = check_url($item->link);
-  $variables['description'] = String::checkPlain($item->description);
+  $variables['title'] = Html::escape($item->title);
+  $variables['link'] = UrlHelper::stripDangerousProtocols($item->link);
+  $variables['description'] = Html::escape($item->description);
   $variables['item_elements'] = empty($item->elements) ? '' : views_rss_format_xml_elements($item->elements);
 }
