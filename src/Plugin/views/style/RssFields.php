@@ -10,8 +10,6 @@ namespace Drupal\views_rss\Plugin\views\style;
 use Drupal\views\Plugin\views\style\StylePluginBase;
 use Drupal\Core\Url;
 use Drupal\Component\Utility\Xss;
-
-use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
@@ -434,7 +432,7 @@ class RssFields extends StylePluginBase {
       '#theme' => $this->themeFunctions(),
       '#view' => $this->view,
       '#options' => $this->options,
-      '#rows' => SafeMarkup::set($rows),
+      '#rows' => $rows,
     );
     unset($this->view->row_index);
     return $build;
