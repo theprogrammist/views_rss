@@ -5,18 +5,18 @@
  * (Un)installation functions for Views RSS: Core Elements module.
  */
 
-use Drupal\Core\Cache\CacheBackendInterface;
+use Drupal\Core\Cache\Cache;
 
 /**
  * Implements hook_install().
  */
 function views_rss_core_install() {
-  \Drupal::cache('data')->invalidateTags(array('views_rss'));
+  Cache::invalidateTags(array('views_rss'));
 }
 
 /**
  * Implements hook_uninstall().
  */
 function views_rss_core_uninstall() {
-  \Drupal::cache('data')->invalidateTags(array('views_rss'));
+  Cache::invalidateTags(array('views_rss'));
 }
