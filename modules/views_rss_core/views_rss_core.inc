@@ -5,7 +5,7 @@
  * Preprocess functions for Views RSS: Core Elements module.
  */
 
-use Drupal\Component\Utility\String;
+use Drupal\Component\Utility\Html;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\taxonomy\Entity\Term;
 
@@ -25,7 +25,7 @@ function views_rss_core_preprocess_channel_title(&$variables) {
     $title = $variables['view']->getTitle();
   }
 
-  $variables['elements'][0]['value'] = String::checkPlain($title);
+  $variables['elements'][0]['value'] = Html::escape($title);
 }
 
 /**
