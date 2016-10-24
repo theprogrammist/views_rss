@@ -333,6 +333,14 @@ function views_rss_core_preprocess_views_view_rss(&$variables) {
       unset($style->channel_elements[$delta]);
     }
   }
-  // Format channel XML elements again, without those 3 elements removed above.
-  $variables['channel_elements'] = format_xml_elements($style->channel_elements);
+
+  $channel_elements = [];
+  foreach ($style->channel_elements as $delta => $channel_element) {
+    //skip markup elements
+    if($delta[0] == '#') continue;
+    $channel_elements[] = $channel_element;
+  }
+
+  $output = views_rss_format_xml_elements($channel_elements);
+  $variables['channel_elements'] = new \Drupal\Component\Render\FormattableMarkup($output,[]);
 }

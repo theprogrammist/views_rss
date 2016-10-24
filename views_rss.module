@@ -122,8 +122,8 @@ function views_rss_rewrite_relative_paths(&$variables) {
         }
         // Value is a string, so just process it.
         else {
-          $pattern = '/(src|href)=(\'|")[^\/]' . preg_quote($base_path, '/') . '/';
-          $replacement = '$1=$2' . url('<front>', array('absolute' => TRUE));
+          $pattern = '/(src|href)=(\'|")' . preg_quote($base_path, '/') . '/';
+          $replacement = '$1=$2' . \Drupal\Core\Url::fromRoute('<front>',[],['absolute'=>TRUE])->toString();
           $variables['elements'][$delta]['value'] = preg_replace($pattern, $replacement, $element['value']);
         }
       }

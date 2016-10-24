@@ -11,6 +11,7 @@ use Drupal\views\Plugin\views\row\RowPluginBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\Component\Utility\Xss;
+use Drupal\Core\Link;
 
 /**
  * Renders an RSS item based on fields.
@@ -98,7 +99,7 @@ class RssFields extends RowPluginBase {
             }
             // Add help link if provided.
             if (isset($definition['help']) && $definition['help']) {
-              $form_item['#description'] .= ' ' . \Drupal::l('[?]', Url::fromUri($definition['help']), array('attributes' => array('title' => t('Need more information?'))));
+              $form_item['#description'] .= ' ' . Link::fromTextAndUrl('[?]', Url::fromUri($definition['help'], array('attributes' => array('title' => t('Need more information?')))))->toString();
             }
             // Check if element should be displayed in a subgroup.
             if (isset($definition['group']) && $definition['group']) {
@@ -337,7 +338,7 @@ class RssFields extends RowPluginBase {
       '#row' => $item,
       '#field_alias' => isset($this->field_alias) ? $this->field_alias : '',
     );
-    return drupal_render_root($build);
+    return \Drupal::service('renderer')->renderPlain($build);
   }
 
   /**

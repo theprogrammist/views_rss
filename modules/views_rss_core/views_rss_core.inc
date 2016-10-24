@@ -59,7 +59,7 @@ function views_rss_core_preprocess_channel_atom_link(&$variables) {
 
   $variables['elements'][0]['attributes'] = array(
     'rel' => 'self',
-    'href' => _url($variables['view']->getUrl(), $url_options),
+    'href' => $variables['view']->getUrl($url_options)->toString(),
   );
 }
 
@@ -68,7 +68,7 @@ function views_rss_core_preprocess_channel_atom_link(&$variables) {
  */
 function views_rss_core_preprocess_channel_language(&$variables) {
   if (empty($variables['elements'][0]['value'])) {
-    $variables['elements'][0]['value'] = String::checkPlain(\Drupal::languageManager()->getCurrentLanguage()->getId());
+    $variables['elements'][0]['value'] = Html::escape(\Drupal::languageManager()->getCurrentLanguage()->getId());
   }
 }
 
@@ -226,7 +226,10 @@ function views_rss_core_preprocess_item_category(&$variables) {
     // in the taxonomy.
     $values = array();
     // Load parent term objects (this includes original term as well).
-    if ($parents = \Drupal::entityManager()->getStorage('taxonomy_term')->loadAllParents($term->id())) {
+    //\Drupal\taxonomy\TermStorage::loadAllParents($term->id()) $parents = $this->termStorage->loadAllParents($term->id());
+    //if ($parents = $this->entityManager->getStorage('taxonomy_term')->loadAllParents($term->id())) {
+    //if ($parents = \Drupal::entityManager()->getStorage('taxonomy_term')->loadAllParents($term->id())) {
+    if (!empty($term) && $parents = \Drupal::entityManager()->getStorage('taxonomy_term')->loadAllParents($term->id())) {
       foreach ($parents as $parent) {
         $values[] = $parent->label();
       }
@@ -240,7 +243,7 @@ function views_rss_core_preprocess_item_category(&$variables) {
       // either vocabulary name or its URL. We don't have any safe way to know
       // public vocabulary URL, could use its name instead though? @TODO?
       'attributes' => array(
-        'domain' => $term->url('canonical', array('absolute' => TRUE)),
+        'domain' => empty($term) ? '' : $term->url('canonical', array('absolute' => TRUE)),
       ),
     );
 
@@ -279,7 +282,7 @@ function views_rss_core_preprocess_item_enclosure(&$variables) {
       // Image style is defined, need to link to resized version.
       if ($image_style_name = $item['rendered']['#image_style']) {
         $image_uri = $file->getFileUri();
-        $image_style = entity_load('image_style', $image_style_name);
+        $image_style = \Drupal::entityTypeManager()->getStorage('image_style')->load($image_style_name);
         $image_style_uri = $image_style->buildUri($image_uri);
 
         // If the derivative doesn't exist yet, we won't be able to get its size
@@ -360,6 +363,6 @@ function views_rss_core_preprocess_item_source(&$variables) {
     $url_options['query'] = $input;
   }
 
-  $variables['elements'][0]['value'] = String::checkPlain($title);
-  $variables['elements'][0]['attributes'] = array('url' => _url($variables['view']->getUrl(), $url_options));
+  $variables['elements'][0]['value'] = Html::escape($title);
+  $variables['elements'][0]['attributes'] = $variables['view']->getUrl($url_options)->toString;
 }

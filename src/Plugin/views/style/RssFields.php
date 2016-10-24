@@ -11,6 +11,8 @@ use Drupal\views\Plugin\views\style\StylePluginBase;
 use Drupal\Core\Url;
 use Drupal\Component\Utility\Xss;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Link;
+use Drupal\Component\Render\FormattableMarkup;
 
 /**
  * Default style plugin to render an RSS feed from fields.
@@ -66,7 +68,7 @@ class RssFields extends StylePluginBase {
     }
     $url_options['absolute'] = TRUE;
 
-    $url = _url($this->view->getUrl(NULL, $path), $url_options);
+    $url = $this->view->getUrl($url_options, $path)->toString();
 
     // Add the RSS icon to the view.
     $this->view->feedIcons[] = [
@@ -180,7 +182,7 @@ class RssFields extends StylePluginBase {
             }
             // Add help link if provided.
             if (!empty($definition['help'])) {
-              $form_item['#description'] .= ' ' . \Drupal::l('[?]', Url::fromUri($definition['help']), array('attributes' => array('title' => t('Need more information?'))));
+              $form_item['#description'] .= ' ' . Link::fromTextAndUrl('[?]', Url::fromUri($definition['help'], array('attributes' => array('title' => t('Need more information?')))))->toString();
             }
             // Check if element should be displayed in a subgroup.
             if (!empty($definition['group'])) {
@@ -432,7 +434,7 @@ class RssFields extends StylePluginBase {
       '#theme' => $this->themeFunctions(),
       '#view' => $this->view,
       '#options' => $this->options,
-      '#rows' => $rows,
+      '#rows' => new FormattableMarkup($rows,[]),
     );
     unset($this->view->row_index);
     return $build;

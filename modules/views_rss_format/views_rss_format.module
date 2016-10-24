@@ -34,15 +34,24 @@ use Drupal\Component\Utility\UrlHelper;
 function views_rss_format_xml_elements($array) {
   $output = '';
   foreach ($array as $key => $value) {
+    //skip markup
+    if($value[0] == '#') continue;
+
     if (is_numeric($key)) {
       if ($value['key']) {
         $output .= ' <' . $value['key'];
         if (isset($value['attributes']) && is_array($value['attributes'])) {
-          $output .= new Attribute($value['attributes']);
+          $attributes = [];
+          foreach ($value['attributes'] as $k => $attribute) {
+            //skip markup elements
+            if($k[0] == '#') continue;
+            $attributes[$k] = $attribute;
+          }
+          $output .= new Attribute($attributes);
         }
 
         if (isset($value['value']) && $value['value'] != '') {
-          $output .= '>' . (is_array($value['value']) ? views_rss_format_xml_elements($value['value']) : (!empty($value['encoded']) ? $value['value'] : String::checkPlain($value['value']))) . '</' . $value['key'] . ">\n";
+          $output .= '>' . (is_array($value['value']) ? views_rss_format_xml_elements($value['value']) : (!empty($value['encoded']) ? $value['value'] : Html::escape($value['value']))) . '</' . $value['key'] . ">\n";
         }
         else {
           $output .= " />\n";
@@ -50,14 +59,14 @@ function views_rss_format_xml_elements($array) {
       }
     }
     else {
-      $output .= ' <' . $key . '>' . (is_array($value) ? views_rss_format_xml_elements($value) : String::checkPlain($value)) . "</$key>\n";
+      $output .= ' <' . $key . '>' . (is_array($value) ? views_rss_format_xml_elements($value) : Html::escape($value)) . "</$key>\n";
     }
   }
   // @todo This is marking the output string as safe HTML, but we have only
   //   sanitized the attributes and tag values, not the tag names, and we
   //   cannot guarantee the assembled markup is safe. Consider a fix in:
   //   https://www.drupal.org/node/2296885
-  return SafeMarkup::set($output);
+  return $output;
 }
 
 /**
